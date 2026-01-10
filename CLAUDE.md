@@ -30,7 +30,7 @@ if git diff --cached --name-only | grep -q "supabase/migrations"; then
 fi
 ```
 
-### 2. Server-First Architecture (Next.js 15.3)
+### 2. Server-First Architecture (Next.js 16.1)
 
 ```typescript
 // ✅ Server Components by default
@@ -139,7 +139,7 @@ When working with Supabase databases, **ALWAYS** use migrations for ANY schema c
 
 This ensures reproducible database states across all environments and team members.
 
-## 📁 Project Structure (Next.js 15.3 + Supabase)
+## 📁 Project Structure (Next.js 16.1 + Supabase)
 
 ```
 ├── app/                      # App Router
@@ -166,7 +166,7 @@ This ensures reproducible database states across all environments and team membe
     └── config.toml         # Supabase configuration
 ```
 
-## 🎯 Next.js 15.3 Patterns
+## 🎯 Next.js 16.1 Patterns
 
 ### Server Actions with Revalidation
 
@@ -204,7 +204,7 @@ export async function createPost(formData: PostInput) {
 ### Form Component with Prefetching
 
 ```typescript
-// Using Next.js 15.3 stable Form component
+// Using Next.js 16.1 stable Form component
 import Form from 'next/form'
 
 export function SearchForm() {

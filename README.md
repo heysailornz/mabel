@@ -5,7 +5,7 @@ A production-ready monorepo boilerplate built with Turborepo, featuring a Next.j
 ## Tech Stack
 
 - **Monorepo**: Turborepo + pnpm
-- **Web**: Next.js 15.3
+- **Web**: Next.js 16.1
 - **Mobile**: Expo (managed workflow)
 - **Database**: Supabase
 - **Auth**: Supabase Auth
@@ -17,7 +17,7 @@ A production-ready monorepo boilerplate built with Turborepo, featuring a Next.j
 ```
 project/
 ├── apps/
-│   ├── web/               # Next.js 15.3 web app
+│   ├── web/               # Next.js 16.1 web app
 │   └── mobile/            # Expo React Native app
 ├── packages/
 │   └── @project/
@@ -58,12 +58,14 @@ pnpm db:start
 Create `.env.local` files for each app:
 
 **apps/web/.env.local:**
+
 ```env
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ```
 
 **apps/mobile/.env:**
+
 ```env
 EXPO_PUBLIC_SUPABASE_URL=http://YOUR_LOCAL_IP:54321
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
@@ -80,16 +82,19 @@ pnpm build
 ### 4. Start Development
 
 **Web app:**
+
 ```bash
 pnpm dev:web
 ```
 
 **Mobile app:**
+
 ```bash
 pnpm dev:mobile
 ```
 
 **Both (parallel):**
+
 ```bash
 pnpm dev
 ```
@@ -124,11 +129,13 @@ pnpm db:push          # Push migrations to remote
 ### Database Changes
 
 1. Create a migration:
+
 ```bash
 supabase migration new create_your_table
 ```
 
 2. Apply locally and regenerate types:
+
 ```bash
 pnpm db:reset
 pnpm db:types
@@ -169,11 +176,13 @@ pnpm --filter @project/web build
 ### Auth Flow
 
 **Web (Server Actions):**
+
 ```
 User → Server Action → @project/core → Supabase
 ```
 
 **Mobile (Direct):**
+
 ```
 User → Auth Context → @project/core → Supabase
 ```
