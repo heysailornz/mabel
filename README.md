@@ -1,213 +1,210 @@
-# Next.js 15.3 + Supabase + TypeScript Starter
+# Monorepo Boilerplate
 
-A modern, production-ready starter template for building full-stack applications with Next.js 15.3, Supabase, TypeScript, and Tailwind CSS v4.
+A production-ready monorepo boilerplate built with Turborepo, featuring a Next.js web app and Expo React Native mobile app with shared packages.
 
-## 🚀 Features
+## Tech Stack
 
-- **Next.js 15.3** with App Router and Server Components
-- **Supabase** for authentication and database
-- **TypeScript** with strict mode for type safety
-- **Tailwind CSS v4** for modern styling
-- **shadcn/ui** component library
-- **Authentication** - Complete auth flow with sign up, sign in, and protected routes
-- **Database Migrations** - Migration-first development with type generation
-- **Vitest** for testing
-- **Zod** for schema validation
-- Pre-configured development tools (ESLint, Prettier)
+- **Monorepo**: Turborepo + pnpm
+- **Web**: Next.js 15.3
+- **Mobile**: Expo (managed workflow)
+- **Database**: Supabase
+- **Auth**: Supabase Auth
+- **Web Components**: shadcn/ui
+- **Mobile Components**: React Native
 
-## 📋 Prerequisites
+## Project Structure
 
-- Node.js 18+ 
-- npm/yarn/pnpm
+```
+project/
+├── apps/
+│   ├── web/               # Next.js 15.3 web app
+│   └── mobile/            # Expo React Native app
+├── packages/
+│   └── @project/
+│       ├── core/          # Shared business logic
+│       ├── db/            # Supabase types + clients
+│       ├── config/        # Environment validation
+│       ├── tsconfig/      # Shared TypeScript configs
+│       └── eslint-config/ # Shared ESLint configs
+├── supabase/              # Database migrations (shared)
+├── turbo.json
+├── pnpm-workspace.yaml
+└── package.json
+```
+
+## Prerequisites
+
+- Node.js 18+
+- pnpm 9+
 - Supabase CLI (`brew install supabase/tap/supabase`)
+- Expo CLI (`npm install -g expo-cli`) - for mobile development
 
-## 🛠️ Getting Started
+## Getting Started
 
-### 1. Clone and Install
+### 1. Install Dependencies
 
 ```bash
-git clone <your-repo-url>
-cd my-app
-npm install
+pnpm install
 ```
 
 ### 2. Set Up Supabase
 
-Start local Supabase development stack:
+Start local Supabase:
 
 ```bash
-npm run db:start
+pnpm db:start
 ```
 
-This will output your local Supabase credentials. Update `.env.local`:
+Create `.env.local` files for each app:
 
+**apps/web/.env.local:**
 ```env
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
-### 3. Run Development Server
+**apps/mobile/.env:**
+```env
+EXPO_PUBLIC_SUPABASE_URL=http://YOUR_LOCAL_IP:54321
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+
+Note: Mobile requires your machine's local IP, not localhost.
+
+### 3. Build Shared Packages
 
 ```bash
-npm run dev
+pnpm build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see your app.
+### 4. Start Development
 
-## 📁 Project Structure
-
-```
-├── app/                    # Next.js App Router
-│   ├── (auth)/            # Auth routes (signin, signup)
-│   ├── (dashboard)/       # Protected dashboard routes
-│   └── layout.tsx         # Root layout
-├── components/            
-│   ├── ui/                # shadcn/ui components
-│   └── features/          # Feature-specific components
-│       └── auth/          # Auth form components
-├── lib/
-│   ├── supabase/         # Supabase client configs
-│   ├── env.ts            # Environment validation
-│   └── utils.ts          # Utility functions
-├── server/
-│   ├── actions/          # Server Actions
-│   │   └── auth.ts       # Auth actions (signUp, signIn, signOut)
-│   └── queries/          # Database queries
-├── hooks/                # React hooks
-├── supabase/
-│   ├── migrations/       # Database migrations
-│   └── config.toml       # Supabase configuration
-├── types/                # TypeScript types
-│   └── supabase.ts       # Generated DB types
-└── middleware.ts         # Auth middleware
+**Web app:**
+```bash
+pnpm dev:web
 ```
 
-## 🔧 Available Scripts
+**Mobile app:**
+```bash
+pnpm dev:mobile
+```
+
+**Both (parallel):**
+```bash
+pnpm dev
+```
+
+## Available Scripts
+
+### Root
 
 ```bash
-# Development
-npm run dev              # Start dev server with Turbopack
-npm run build           # Build for production
-npm run start           # Start production server
-npm run lint            # Run ESLint
-
-# Database
-npm run db:start        # Start local Supabase
-npm run db:stop         # Stop local Supabase
-npm run db:reset        # Reset database
-npm run db:types        # Generate TypeScript types
-npm run db:push         # Push migrations to remote
-
-# Testing
-npm run test            # Run tests in watch mode
-npm run test:ui         # Open Vitest UI
+pnpm dev              # Run all apps in dev mode
+pnpm dev:web          # Run web app only
+pnpm dev:mobile       # Run mobile app only
+pnpm build            # Build all packages and apps
+pnpm lint             # Lint all packages
+pnpm test             # Run all tests
+pnpm typecheck        # Type check all packages
+pnpm clean            # Clean all build artifacts
 ```
 
-## 🏗️ Development Workflow
+### Database
+
+```bash
+pnpm db:start         # Start local Supabase
+pnpm db:stop          # Stop local Supabase
+pnpm db:reset         # Reset database (apply all migrations)
+pnpm db:types         # Regenerate TypeScript types
+pnpm db:push          # Push migrations to remote
+```
+
+## Development Workflow
 
 ### Database Changes
 
 1. Create a migration:
 ```bash
-supabase migration new create_posts_table
+supabase migration new create_your_table
 ```
 
 2. Apply locally and regenerate types:
 ```bash
-npm run db:reset
-npm run db:types
+pnpm db:reset
+pnpm db:types
 ```
 
-### Adding UI Components
+### Adding Shared Business Logic
+
+Add code to `packages/@project/core/src/`. Both web and mobile apps can import:
+
+```typescript
+import { someFunction } from "@project/core";
+```
+
+### Adding Web UI Components
 
 ```bash
+cd apps/web
 npx shadcn@latest add button card dialog
 ```
 
-### Creating Features
-
-1. Use Server Components by default
-2. Add `'use client'` only when needed
-3. Separate server and client Supabase instances
-4. Use Server Actions for mutations
-
-## 🧪 Testing
-
-Write tests for:
-- Business logic in utilities and hooks
-- Server Actions with mocked Supabase
-- Component behavior (not visual appearance)
-- Error states and edge cases
+### Building a Single Package
 
 ```bash
-npm run test
+pnpm --filter @project/core build
+pnpm --filter @project/web build
 ```
 
-## 📚 Key Concepts
+## Architecture
 
-### Server Components First
+### Shared Packages
+
+- **@project/core**: Platform-agnostic business logic (auth, etc.)
+- **@project/db**: Supabase types and platform-specific clients
+- **@project/config**: Environment variable validation with Zod
+- **@project/tsconfig**: Shared TypeScript configurations
+- **@project/eslint-config**: Shared ESLint configurations
+
+### Auth Flow
+
+**Web (Server Actions):**
+```
+User → Server Action → @project/core → Supabase
+```
+
+**Mobile (Direct):**
+```
+User → Auth Context → @project/core → Supabase
+```
+
+The `@project/core` auth functions accept a Supabase client as a parameter, making them platform-agnostic.
+
+### Database Types
+
+Both apps import types from the shared package:
 
 ```typescript
-// ✅ Server Component (default)
-export default async function Page() {
-  const data = await getServerData()
-  return <ClientComponent initialData={data} />
-}
+import type { Database, TableRow } from "@project/db/types";
 ```
 
-### Supabase Client Separation
+## Environment Variables
 
-```typescript
-// Client-side (browser)
-import { createClient } from '@/lib/supabase/client'
-
-// Server-side (Node.js)
-import { createClient } from '@/lib/supabase/server'
-```
-
-### Type-Safe Database Queries
-
-```typescript
-import type { Database } from '@/types/supabase'
-
-type Post = Database['public']['Tables']['posts']['Row']
-```
-
-### Authentication Flow
-
-The starter includes a complete auth setup:
-- Sign up/in pages at `/signup` and `/signin`
-- Protected routes under `(dashboard)`
-- Server actions for auth operations
-- Automatic profile creation on signup
-- Session management via middleware
-
-## 🚨 Important Guidelines
-
-1. **Always regenerate types** after schema changes
-2. **Use migrations** for all database changes
-3. **Enable RLS** on all tables
-4. **Validate environment variables** with Zod
-5. **Test business logic**, not implementation details
-
-## 📝 Environment Variables
-
-Required environment variables:
+### Web (apps/web/.env.local)
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
+SUPABASE_SERVICE_ROLE_KEY=    # Optional, server-side only
 ```
 
-## 🤝 Contributing
+### Mobile (apps/mobile/.env)
 
-1. Create feature branch
-2. Make changes following the patterns in CLAUDE.md
-3. Write/update tests
-4. Submit PR
+```env
+EXPO_PUBLIC_SUPABASE_URL=
+EXPO_PUBLIC_SUPABASE_ANON_KEY=
+```
 
-## 📄 License
+## License
 
 MIT

@@ -1,4 +1,18 @@
-# Next.js 15.3 + Supabase + TypeScript Best Practices
+# About this project
+
+This is a monorepo boilerplate for building full-stack applications with a Next.js web app and Expo React Native mobile app. It includes authentication, shared business logic, and database integration out of the box.
+
+# Technology stack
+
+- **Web framework**: Next.js 16.1
+- **Mobile framework**: Expo (managed workflow)
+- **Monorepo**: Turborepo + pnpm
+- **Database**: Supabase
+- **Auth**: Supabase Auth
+- **Web components**: shadcn/ui
+- **Mobile components**: React Native
+
+# Next.js 16.1 + Supabase + TypeScript Best Practices
 
 ## 🚀 Core Principles
 
@@ -30,13 +44,13 @@ import { after } from 'next/server'
 
 export async function createPost(data: PostInput) {
   const post = await db.posts.create(data)
-  
+
   after(async () => {
     // Non-blocking: analytics, cache warming, webhooks
     await trackEvent('post_created', { postId: post.id })
     await sendNotification(post.authorId)
   })
-  
+
   return post
 }
 ```
@@ -45,21 +59,21 @@ export async function createPost(data: PostInput) {
 
 ```typescript
 // lib/supabase/client.ts - Browser only
-import { createBrowserClient } from '@supabase/ssr'
-import type { Database } from '@/types/supabase'
+import { createBrowserClient } from "@supabase/ssr";
+import type { Database } from "@/types/supabase";
 
 export const createClient = () =>
   createBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  );
 
 // lib/supabase/server.ts - Server only
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 
 export const createClient = async () => {
-  const cookieStore = await cookies()
+  const cookieStore = await cookies();
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -69,57 +83,59 @@ export const createClient = async () => {
         setAll: (cookiesToSet) => {
           cookiesToSet.forEach(({ name, value, options }) =>
             cookieStore.set(name, value, options)
-          )
+          );
         },
       },
     }
-  )
-}
+  );
+};
 ```
+
 ### Supabase Migration-First Development
 
 When working with Supabase databases, **ALWAYS** use migrations for ANY schema changes:
+
 ### Core Rules
 
 1. **NEVER modify the database directly** - No manual CREATE TABLE, ALTER TABLE, etc.
-    
 2. **ALWAYS create a migration file** for schema changes:
-    
-    ```bash
-    supabase migration new descriptive_name_here
-    ```
-    
+
+   ```bash
+   supabase migration new descriptive_name_here
+   ```
+
 3. **Migration naming convention**:
-    
-    - `create_[table]_table` - New tables
-    - `add_[column]_to_[table]` - New columns
-    - `update_[table]_[change]` - Modifications
-    - `create_[name]_index` - Indexes
-    - `add_[table]_rls` - RLS policies
+   - `create_[table]_table` - New tables
+   - `add_[column]_to_[table]` - New columns
+   - `update_[table]_[change]` - Modifications
+   - `create_[name]_index` - Indexes
+   - `add_[table]_rls` - RLS policies
+
 4. **After EVERY migration**:
-    ```bash
-    supabase db reset                          # Apply locally
-    supabase gen types --local > types/supabase.ts  # Update types
-    ```
+   ```bash
+   supabase db reset                          # Apply locally
+   supabase gen types --local > types/supabase.ts  # Update types
+   ```
 5. **Example workflow for adding a field**:
-    ```bash
-    # Wrong ❌
-    ALTER TABLE posts ADD COLUMN views INTEGER DEFAULT 0;
-    
-    # Right ✅
-    supabase migration new add_views_to_posts
-    # Then write SQL in the generated file
-    # Then: supabase db reset && npm run db:types
-    ```
+
+   ```bash
+   # Wrong ❌
+   ALTER TABLE posts ADD COLUMN views INTEGER DEFAULT 0;
+
+   # Right ✅
+   supabase migration new add_views_to_posts
+   # Then write SQL in the generated file
+   # Then: supabase db reset && npm run db:types
+   ```
+
 6. **Include in EVERY migration**:
-    
-    - Enable RLS on new tables
-    - Add proper indexes
-    - Consider adding triggers for updated_at
+   - Enable RLS on new tables
+   - Add proper indexes
+   - Consider adding triggers for updated_at
+
 7. **Commit both**:
-    
-    - Migration file (`supabase/migrations/*.sql`)
-    - Updated types (`types/supabase.ts`)
+   - Migration file (`supabase/migrations/*.sql`)
+   - Updated types (`types/supabase.ts`)
 
 This ensures reproducible database states across all environments and team members.
 
@@ -156,32 +172,32 @@ This ensures reproducible database states across all environments and team membe
 
 ```typescript
 // server/actions/posts.ts
-'use server'
+"use server";
 
-import { revalidateTag, revalidatePath } from 'next/cache'
-import { after } from 'next/server'
+import { revalidateTag, revalidatePath } from "next/cache";
+import { after } from "next/server";
 
 export async function createPost(formData: PostInput) {
-  const supabase = await createClient()
-  
+  const supabase = await createClient();
+
   const { data, error } = await supabase
-    .from('posts')
+    .from("posts")
     .insert(formData)
     .select()
-    .single()
+    .single();
 
-  if (error) throw error
+  if (error) throw error;
 
   // Immediate revalidation
-  revalidateTag('posts')
-  revalidatePath('/dashboard')
-  
+  revalidateTag("posts");
+  revalidatePath("/dashboard");
+
   // Deferred operations
   after(async () => {
-    await notifySubscribers(data.id)
-  })
+    await notifySubscribers(data.id);
+  });
 
-  return data
+  return data;
 }
 ```
 
@@ -210,12 +226,12 @@ import { connection } from 'next/server'
 export default async function Layout({ children }) {
   // Pre-warm database connection
   await connection()
-  
+
   // Pre-connect to external services
-  await fetch('https://api.service.com/warmup', { 
-    method: 'HEAD' 
+  await fetch('https://api.service.com/warmup', {
+    method: 'HEAD'
   })
-  
+
   return <>{children}</>
 }
 ```
@@ -223,6 +239,7 @@ export default async function Layout({ children }) {
 ## 🔐 Authentication Pattern (Already Implemented)
 
 The starter includes a complete authentication setup:
+
 - Sign up/Sign in pages at `/signup` and `/signin`
 - Protected dashboard routes under `app/(dashboard)/`
 - Server actions in `server/actions/auth.ts`
@@ -248,9 +265,9 @@ import { redirect } from 'next/navigation'
 export default async function DashboardLayout({ children }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  
+
   if (!user) redirect('/login')
-  
+
   return <>{children}</>
 }
 
@@ -273,8 +290,8 @@ export async function signOut()
   --color-primary: oklch(24% 0.15 256);
   --color-background: oklch(100% 0 0);
   --color-foreground: oklch(10% 0 0);
-  
-  --font-sans: 'Inter', system-ui, sans-serif;
+
+  --font-sans: "Inter", system-ui, sans-serif;
   --radius: 0.5rem;
 }
 
@@ -298,16 +315,16 @@ import { useToast } from '@/hooks/use-toast'
 
 export function PostCard({ post }: { post: Post }) {
   const { toast } = useToast()
-  
+
   async function handleLike() {
     const result = await likePost(post.id)
-    
+
     toast({
       title: result.success ? "Liked!" : "Error",
       variant: result.success ? "default" : "destructive",
     })
   }
-  
+
   return (
     <Card>
       <CardHeader>
@@ -326,31 +343,34 @@ export function PostCard({ post }: { post: Post }) {
 
 ```typescript
 // hooks/use-realtime.ts
-export function useRealtime<T extends keyof Database['public']['Tables']>(
+export function useRealtime<T extends keyof Database["public"]["Tables"]>(
   table: T,
   filter?: string
 ) {
-  const [data, setData] = useState<Tables<T>[]>([])
-  const supabase = createClient() // Client-side only
+  const [data, setData] = useState<Tables<T>[]>([]);
+  const supabase = createClient(); // Client-side only
 
   useEffect(() => {
     const channel = supabase
       .channel(`realtime:${table}`)
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table, filter },
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table, filter },
         (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setData(prev => [payload.new as Tables<T>, ...prev])
+          if (payload.eventType === "INSERT") {
+            setData((prev) => [payload.new as Tables<T>, ...prev]);
           }
           // Handle UPDATE, DELETE
         }
       )
-      .subscribe()
+      .subscribe();
 
-    return () => { channel.unsubscribe() }
-  }, [table, filter])
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [table, filter]);
 
-  return data
+  return data;
 }
 ```
 
@@ -371,30 +391,30 @@ npm i -D vitest @testing-library/react @testing-library/user-event @vitejs/plugi
 
 ```typescript
 // vitest.config.ts
-import { defineConfig } from 'vitest/config'
-import react from '@vitejs/plugin-react'
-import path from 'path'
+import { defineConfig } from "vitest/config";
+import react from "@vitejs/plugin-react";
+import path from "path";
 
 export default defineConfig({
   plugins: [react()],
   test: {
-    environment: 'jsdom',
-    setupFiles: './test/setup.ts',
+    environment: "jsdom",
+    setupFiles: "./test/setup.ts",
     globals: true,
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './'),
+      "@": path.resolve(__dirname, "./"),
     },
   },
-})
+});
 
 // test/setup.ts
-import '@testing-library/jest-dom'
-import { vi } from 'vitest'
+import "@testing-library/jest-dom";
+import { vi } from "vitest";
 
 // Mock Supabase client
-vi.mock('@/lib/supabase/client', () => ({
+vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({
     from: vi.fn(() => ({
       select: vi.fn(() => ({
@@ -407,10 +427,12 @@ vi.mock('@/lib/supabase/client', () => ({
       })),
     })),
     auth: {
-      getUser: vi.fn(() => Promise.resolve({ data: { user: null }, error: null })),
+      getUser: vi.fn(() =>
+        Promise.resolve({ data: { user: null }, error: null })
+      ),
     },
   }),
-}))
+}));
 ```
 
 ### Testing Patterns
@@ -438,10 +460,10 @@ describe('PostCard', () => {
   it('calls onLike when like button clicked', async () => {
     const onLike = vi.fn()
     const user = userEvent.setup()
-    
+
     render(<PostCard post={mockPost} onLike={onLike} />)
     await user.click(screen.getByRole('button', { name: /like/i }))
-    
+
     expect(onLike).toHaveBeenCalledWith(mockPost.id)
   })
 })
@@ -458,17 +480,17 @@ describe('createPost', () => {
       from: vi.fn(() => ({
         insert: vi.fn(() => ({
           select: vi.fn(() => ({
-            single: vi.fn(() => ({ 
-              data: { id: '1', title: 'New Post' }, 
-              error: null 
+            single: vi.fn(() => ({
+              data: { id: '1', title: 'New Post' },
+              error: null
             })),
           })),
         })),
       })),
     }
-    
+
     vi.mocked(createClient).mockResolvedValue(mockSupabase as any)
-    
+
     const result = await createPost({ title: 'New Post', content: 'Content' })
     expect(result).toEqual({ id: '1', title: 'New Post' })
   })
@@ -478,17 +500,17 @@ describe('createPost', () => {
       from: vi.fn(() => ({
         insert: vi.fn(() => ({
           select: vi.fn(() => ({
-            single: vi.fn(() => ({ 
-              data: null, 
-              error: new Error('Database error') 
+            single: vi.fn(() => ({
+              data: null,
+              error: new Error('Database error')
             })),
           })),
         })),
       })),
     }
-    
+
     vi.mocked(createClient).mockResolvedValue(mockSupabase as any)
-    
+
     await expect(createPost({ title: 'Test', content: 'Test' }))
       .rejects.toThrow('Database error')
   })
@@ -501,24 +523,26 @@ describe('createPost', () => {
 
 ```typescript
 // server/queries/posts.ts
-import type { Database } from '@/types/supabase'
+import type { Database } from "@/types/supabase";
 
-type Tables<T extends keyof Database['public']['Tables']> = 
-  Database['public']['Tables'][T]['Row']
+type Tables<T extends keyof Database["public"]["Tables"]> =
+  Database["public"]["Tables"][T]["Row"];
 
 export async function getPosts() {
-  const supabase = await createClient()
-  
+  const supabase = await createClient();
+
   const { data, error } = await supabase
-    .from('posts')
-    .select(`
+    .from("posts")
+    .select(
+      `
       *,
       profiles!inner(username, avatar_url)
-    `)
-    .order('created_at', { ascending: false })
+    `
+    )
+    .order("created_at", { ascending: false });
 
-  if (error) throw error
-  return data
+  if (error) throw error;
+  return data;
 }
 ```
 
@@ -548,12 +572,12 @@ export default async function DashboardPage() {
     getProfile(),
     getStats()
   ])
-  
+
   return (
-    <Dashboard 
-      posts={posts} 
-      profile={profile} 
-      stats={stats} 
+    <Dashboard
+      posts={posts}
+      profile={profile}
+      stats={stats}
     />
   )
 }
@@ -604,15 +628,15 @@ async function PostsList() {
 
 ```typescript
 // lib/env.ts - Validated env vars
-import { z } from 'zod'
+import { z } from "zod";
 
 const envSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
-})
+});
 
-export const env = envSchema.parse(process.env)
+export const env = envSchema.parse(process.env);
 ```
 
 ## ⚡ Key Commands
