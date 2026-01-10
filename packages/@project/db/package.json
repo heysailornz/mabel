@@ -1,0 +1,67 @@
+{
+  "name": "@project/db",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./types": {
+      "import": "./dist/types/index.mjs",
+      "require": "./dist/types/index.js",
+      "types": "./dist/types/index.d.ts"
+    },
+    "./web/server": {
+      "import": "./dist/web/server.mjs",
+      "require": "./dist/web/server.js",
+      "types": "./dist/web/server.d.ts"
+    },
+    "./web/client": {
+      "import": "./dist/web/client.mjs",
+      "require": "./dist/web/client.js",
+      "types": "./dist/web/client.d.ts"
+    },
+    "./web/middleware": {
+      "import": "./dist/web/middleware.mjs",
+      "require": "./dist/web/middleware.js",
+      "types": "./dist/web/middleware.d.ts"
+    },
+    "./mobile": {
+      "import": "./dist/mobile/index.mjs",
+      "require": "./dist/mobile/index.js",
+      "types": "./dist/mobile/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.8",
+    "@supabase/ssr": "^0.6.1"
+  },
+  "devDependencies": {
+    "@project/tsconfig": "workspace:*",
+    "@types/node": "^20.17.57",
+    "tsup": "^8.0.0",
+    "typescript": "^5"
+  },
+  "peerDependencies": {
+    "next": ">=15.0.0",
+    "expo-secure-store": ">=14.0.0"
+  },
+  "peerDependenciesMeta": {
+    "next": {
+      "optional": true
+    },
+    "expo-secure-store": {
+      "optional": true
+    }
+  }
+}

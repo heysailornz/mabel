@@ -1,0 +1,39 @@
+{
+  "name": "@project/config",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./web": {
+      "import": "./dist/web.mjs",
+      "require": "./dist/web.js",
+      "types": "./dist/web.d.ts"
+    },
+    "./mobile": {
+      "import": "./dist/mobile.mjs",
+      "require": "./dist/mobile.js",
+      "types": "./dist/mobile.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^3.25.42"
+  },
+  "devDependencies": {
+    "@project/tsconfig": "workspace:*",
+    "@types/node": "^20.17.57",
+    "tsup": "^8.0.0",
+    "typescript": "^5"
+  }
+}
