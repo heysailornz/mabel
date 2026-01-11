@@ -26,6 +26,7 @@ config.resolver.disableHierarchicalLookup = true;
 const workspacePackages = {
   "@project/core": path.resolve(monorepoRoot, "packages/@project/core/src"),
   "@project/db": path.resolve(monorepoRoot, "packages/@project/db/src"),
+  "@project/hooks": path.resolve(monorepoRoot, "packages/@project/hooks/src"),
   "@project/config": path.resolve(monorepoRoot, "packages/@project/config"),
 };
 

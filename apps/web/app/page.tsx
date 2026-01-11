@@ -60,14 +60,9 @@ export default async function Home() {
             </Link>
           ) : (
             <>
-              <Link href="/signin">
+              <Link href="/auth">
                 <Button size="lg" className="gap-2">
                   Get Started <ArrowRight className="w-4 h-4" />
-                </Button>
-              </Link>
-              <Link href="/signup">
-                <Button size="lg" variant="outline">
-                  Create Account
                 </Button>
               </Link>
             </>

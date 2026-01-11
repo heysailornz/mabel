@@ -1,20 +1,16 @@
-import { AuthForm } from '@/components/features/auth/auth-form'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Logo } from "@/components/brand/logo"
+import { AuthCard } from "@/components/features/auth/auth-card"
 
 export default function AuthPage() {
   return (
-    <div className="container flex items-center justify-center min-h-screen py-8">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Welcome</CardTitle>
-          <CardDescription>
-            Enter your email to sign in or create an account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <AuthForm />
-        </CardContent>
-      </Card>
+    <div className="flex flex-col items-center gap-8 px-6">
+      <Logo className="h-12 w-auto text-foreground" />
+      <p className="text-center font-serif text-2xl text-foreground">
+        Let me log you in, so I can
+        <br />
+        write your medical notes.
+      </p>
+      <AuthCard />
     </div>
   )
 }

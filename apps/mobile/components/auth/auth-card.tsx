@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React from "react";
 import { Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/auth-context";
-import { requestOTPSchema, verifyOTPSchema } from "@project/core/auth";
+import { useAuthFlow } from "@project/hooks/auth";
 import { getShadow } from "@/lib/shadows";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,81 +12,48 @@ import { Text } from "@/components/ui/text";
 export function AuthCard() {
   const router = useRouter();
   const { requestOTP, verifyOTP } = useAuth();
-  const [step, setStep] = useState<"email" | "otp">("email");
-  const [email, setEmail] = useState("");
-  const [token, setToken] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [emailFocused, setEmailFocused] = useState(false);
-  const [otpFocused, setOtpFocused] = useState(false);
 
-  const handleRequestOTP = async () => {
-    const validation = requestOTPSchema.safeParse({ email });
-    if (!validation.success) {
-      Alert.alert("Validation Error", validation.error.errors[0].message);
-      return;
-    }
-
-    setLoading(true);
-    const result = await requestOTP(email);
-    setLoading(false);
-
-    if (result.error) {
-      Alert.alert("Error", result.error);
-    } else {
-      setStep("otp");
-      // Alert.alert("Code Sent", "Check your email for the verification code.");
-    }
-  };
-
-  const handleVerifyOTP = async () => {
-    const validation = verifyOTPSchema.safeParse({ email, token });
-    if (!validation.success) {
-      Alert.alert("Validation Error", validation.error.errors[0].message);
-      return;
-    }
-
-    setLoading(true);
-    const result = await verifyOTP(email, token);
-    setLoading(false);
-
-    if (result.error) {
-      Alert.alert("Error", result.error);
-    } else {
-      router.replace("/(app)");
-    }
-  };
+  const auth = useAuthFlow({
+    onRequestOTP: async (email) => {
+      const result = await requestOTP(email);
+      return result;
+    },
+    onVerifyOTP: async (email, token) => {
+      const result = await verifyOTP(email, token);
+      return result;
+    },
+    onSuccess: () => router.replace("/(app)"),
+    onError: (message) => Alert.alert("Error", message),
+  });
 
   return (
     <Card style={getShadow("md")}>
       <CardContent className="gap-4 p-4">
-        {step === "otp" ? (
+        {auth.step === "otp" ? (
           <>
             <Text className="text-center text-sm text-foreground">
               Mabel sent a code to{" "}
               <Text className="text-accent-foreground text-sm font-semibold">
-                {email}
+                {auth.email}
               </Text>
             </Text>
             <Input
-              placeholder={otpFocused ? "" : "123456"}
-              value={token}
-              onChangeText={setToken}
-              onFocus={() => setOtpFocused(true)}
-              onBlur={() => setOtpFocused(false)}
+              placeholder={auth.otpPlaceholder}
+              value={auth.token}
+              onChangeText={auth.setToken}
+              onFocus={() => auth.setOtpFocused(true)}
+              onBlur={() => auth.setOtpFocused(false)}
               keyboardType="number-pad"
               maxLength={6}
               autoFocus
               className="text-center text-lg"
             />
-            <Button onPress={handleVerifyOTP} disabled={loading} size="lg">
-              <Text>{loading ? "Verifying..." : "Continue"}</Text>
+            <Button onPress={auth.handleVerifyOTP} disabled={auth.loading} size="lg">
+              <Text>{auth.loading ? "Verifying..." : "Continue"}</Text>
             </Button>
             <Button
               variant="ghost"
-              onPress={() => {
-                setStep("email");
-                setToken("");
-              }}
+              onPress={auth.handleBackToEmail}
               size="lg"
             >
               <Text>Use a different email</Text>
@@ -95,11 +62,11 @@ export function AuthCard() {
         ) : (
           <>
             <Input
-              placeholder={emailFocused ? "" : "Enter your email address"}
-              value={email}
-              onChangeText={setEmail}
-              onFocus={() => setEmailFocused(true)}
-              onBlur={() => setEmailFocused(false)}
+              placeholder={auth.emailPlaceholder}
+              value={auth.email}
+              onChangeText={auth.setEmail}
+              onFocus={() => auth.setEmailFocused(true)}
+              onBlur={() => auth.setEmailFocused(false)}
               autoCapitalize="none"
               keyboardType="email-address"
               textContentType="emailAddress"
@@ -107,12 +74,11 @@ export function AuthCard() {
               className="text-center"
             />
             <Button
-              onPress={handleRequestOTP}
-              disabled={loading}
-              // className="h-12"
+              onPress={auth.handleRequestOTP}
+              disabled={auth.loading}
               size="lg"
             >
-              <Text>{loading ? "Sending code..." : "Continue"}</Text>
+              <Text>{auth.loading ? "Sending code..." : "Continue"}</Text>
             </Button>
           </>
         )}

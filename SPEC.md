@@ -867,8 +867,9 @@ mabel/
 - [x] Set up email OTP authentication (replace password auth)
 - [x] Create storage bucket for recordings
 - [x] Set up Edge Functions directory structure
-- [ ] Make branded auth UI for web
+- [x] Make branded auth UI for web
 - [x] make branded auth UI for mobile
+- [ ] transactional email styling
 
 ### Phase 2: Recording & Upload
 
