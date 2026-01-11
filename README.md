@@ -71,7 +71,17 @@ EXPO_PUBLIC_SUPABASE_URL=http://YOUR_LOCAL_IP:54321
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-Note: Mobile requires your machine's local IP, not localhost.
+Note: Mobile requires your machine's local IP, not localhost:
+
+For WiFi:
+```bash
+ipconfig getifaddr en0
+```
+
+or for Ethernet:
+```bash
+ipconfig getifaddr en1
+```
 
 ### 3. Build Shared Packages
 
