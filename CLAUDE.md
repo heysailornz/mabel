@@ -11,7 +11,6 @@ This is a monorepo boilerplate for building full-stack applications with a Next.
 - **Auth**: Supabase Auth
 - **Web components**: shadcn/ui
 - **Mobile components**: React Native Reusables + NativeWind
-- **Shared tokens**: `@project/ui-tokens` (visual parity between web and mobile)
 
 # React Native Reusables + NativeWind Setup
 
@@ -79,20 +78,9 @@ function MyScreen() {
 }
 ```
 
-## Shared Design Tokens
-
-Design tokens are defined in `packages/@project/ui-tokens` and shared between web and mobile:
-
-```bash
-# After changing tokens:
-pnpm --filter @project/ui-tokens generate
-```
-
-This generates `generated/web.css` and `generated/mobile.css` with matching CSS variables.
-
 ## Dark Mode
 
-NativeWind supports dark mode via the `.dark` class. The shared tokens include both light and dark variants.
+NativeWind supports dark mode via the `.dark` class. Theme colors are defined in `global.css` with CSS variables for both light and dark variants.
 
 # Next.js 16.1 + Supabase + TypeScript Best Practices
 

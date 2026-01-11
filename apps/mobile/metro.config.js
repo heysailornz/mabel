@@ -24,7 +24,6 @@ config.resolver.disableHierarchicalLookup = true;
 // 4. Resolve @project/* workspace packages to source for hot reload
 // This maps package imports to their TypeScript source instead of dist/
 const workspacePackages = {
-  "@project/ui-tokens": path.resolve(monorepoRoot, "packages/@project/ui-tokens/src"),
   "@project/core": path.resolve(monorepoRoot, "packages/@project/core/src"),
   "@project/db": path.resolve(monorepoRoot, "packages/@project/db/src"),
   "@project/config": path.resolve(monorepoRoot, "packages/@project/config"),

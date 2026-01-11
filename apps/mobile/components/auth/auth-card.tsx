@@ -3,7 +3,7 @@ import { Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/auth-context";
 import { requestOTPSchema, verifyOTPSchema } from "@project/core/auth";
-import { getNativeShadow } from "@project/ui-tokens";
+import { getShadow } from "@/lib/shadows";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -55,7 +55,7 @@ export function AuthCard() {
   };
 
   return (
-    <Card style={getNativeShadow("md")}>
+    <Card style={getShadow("md")}>
       <CardContent className="gap-4 p-4">
         {step === "otp" ? (
           <>

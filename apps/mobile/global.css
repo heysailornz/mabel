@@ -1,5 +1,48 @@
-@import "@project/ui-tokens/generated/mobile.css";
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --background: #f2f4f0;
+  --foreground: #1a1e15;
+  --card: #ffffff;
+  --card-foreground: #1a1e15;
+  --popover: #ffffff;
+  --popover-foreground: #1a1e15;
+  --primary: #333c2a;
+  --primary-foreground: #f2f4f0;
+  --secondary: #e6eae1;
+  --secondary-foreground: #333c2a;
+  --muted: #e6eae1;
+  --muted-foreground: #667755;
+  --accent: #e6eae1;
+  --accent-foreground: #333c2a;
+  --destructive: #e7000b;
+  --border: #b3c0a5;
+  --input: #b3c0a5;
+  --placeholder: #667755;
+  --ring: #99aa88;
+  --radius: 0.625rem;
+}
+
+.dark {
+  --background: #12150f;
+  --foreground: #f2f4f0;
+  --card: #1a1e15;
+  --card-foreground: #f2f4f0;
+  --popover: #1a1e15;
+  --popover-foreground: #f2f4f0;
+  --primary: #e6eae1;
+  --primary-foreground: #1a1e15;
+  --secondary: #333c2a;
+  --secondary-foreground: #e6eae1;
+  --muted: #333c2a;
+  --muted-foreground: #80956a;
+  --accent: #333c2a;
+  --accent-foreground: #e6eae1;
+  --destructive: #ff6467;
+  --border: #333c2a;
+  --input: #4d5a3f;
+  --placeholder: #667755;
+  --ring: #667755;
+}
