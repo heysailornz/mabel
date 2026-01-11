@@ -5,6 +5,12 @@ import {
 import * as SecureStore from "expo-secure-store";
 import type { Database } from "../types/supabase";
 
+// Re-export Database type for consumers
+export type { Database };
+
+// Re-export useful type helpers
+export type { SupabaseClient };
+
 // Custom storage adapter for React Native using expo-secure-store
 const ExpoSecureStoreAdapter = {
   getItem: async (key: string): Promise<string | null> => {
