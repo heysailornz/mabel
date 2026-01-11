@@ -7,6 +7,9 @@ module.exports = {
   presets: [require("nativewind/preset")],
   theme: {
     extend: {
+      fontSize: {
+        base: ["18px", { lineHeight: "24px" }],
+      },
       fontFamily: {
         noto: ["NotoSerif"],
         "noto-semibold": ["NotoSerif_SemiBold"],

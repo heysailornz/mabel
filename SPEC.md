@@ -868,7 +868,7 @@ mabel/
 - [x] Create storage bucket for recordings
 - [x] Set up Edge Functions directory structure
 - [ ] Make branded auth UI for web
-- [ ] make branded auth UI for mobile
+- [x] make branded auth UI for mobile
 
 ### Phase 2: Recording & Upload
 

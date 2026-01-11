@@ -3,7 +3,7 @@ import { View, KeyboardAvoidingView, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AuthCard } from "@/components/auth/auth-card";
 import { Logo } from "@/components/Logo";
-import { ConversationText } from "@/components/ConversationText";
+import { Text } from "@/components/ui/text";
 
 export default function AuthScreen() {
   const insets = useSafeAreaInsets();
@@ -17,9 +17,9 @@ export default function AuthScreen() {
         {/* Branding area */}
         <View className="flex-1 items-center justify-center px-6">
           <Logo width={160} height={48} />
-          <ConversationText className="mt-6 text-center text-3xl" bold>
+          <Text className="mt-6 text-center text-3xl font-noto">
             Let me log you in, so I can write your medical notes.
-          </ConversationText>
+          </Text>
         </View>
 
         {/* Auth card at bottom */}

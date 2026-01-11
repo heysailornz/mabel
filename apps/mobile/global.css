@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* --color-ash-grey-50: #f2f4f0;
+--color-ash-grey-100: #e6eae1;
+--color-ash-grey-200: #ccd5c3;
+--color-ash-grey-300: #b3c0a5;
+--color-ash-grey-400: #99aa88;
+--color-ash-grey-500: #80956a;
+--color-ash-grey-600: #667755;
+--color-ash-grey-700: #4d5a3f;
+--color-ash-grey-800: #333c2a;
+--color-ash-grey-900: #1a1e15;
+--color-ash-grey-950: #12150f; */
+
 :root {
   --background: #f2f4f0;
   --foreground: #1a1e15;
@@ -9,18 +21,18 @@
   --card-foreground: #1a1e15;
   --popover: #ffffff;
   --popover-foreground: #1a1e15;
-  --primary: #333c2a;
+  --primary: #12150f;
   --primary-foreground: #f2f4f0;
   --secondary: #e6eae1;
   --secondary-foreground: #333c2a;
   --muted: #e6eae1;
-  --muted-foreground: #667755;
+  --muted-foreground: #cccccc;
   --accent: #e6eae1;
-  --accent-foreground: #333c2a;
+  --accent-foreground: #12150f;
   --destructive: #e7000b;
-  --border: #b3c0a5;
-  --input: #b3c0a5;
-  --placeholder: #667755;
+  --border: #b3b3b3;
+  --input: #b3b3b3;
+  --placeholder: #666666;
   --ring: #99aa88;
   --radius: 0.625rem;
 }

@@ -16,6 +16,8 @@ export function AuthCard() {
   const [email, setEmail] = useState("");
   const [token, setToken] = useState("");
   const [loading, setLoading] = useState(false);
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [otpFocused, setOtpFocused] = useState(false);
 
   const handleRequestOTP = async () => {
     const validation = requestOTPSchema.safeParse({ email });
@@ -59,23 +61,24 @@ export function AuthCard() {
       <CardContent className="gap-4 p-4">
         {step === "otp" ? (
           <>
-            <Text className="text-center text-sm text-muted-foreground">
-              Mabel sent a code to {email}
+            <Text className="text-center text-sm text-foreground">
+              Mabel sent a code to{" "}
+              <Text className="text-accent-foreground text-sm font-semibold">
+                {email}
+              </Text>
             </Text>
             <Input
-              placeholder="123456"
+              placeholder={otpFocused ? "" : "123456"}
               value={token}
               onChangeText={setToken}
+              onFocus={() => setOtpFocused(true)}
+              onBlur={() => setOtpFocused(false)}
               keyboardType="number-pad"
               maxLength={6}
               autoFocus
-              className="h-12 text-center text-lg"
+              className="text-center text-lg"
             />
-            <Button
-              onPress={handleVerifyOTP}
-              disabled={loading}
-              className="h-12"
-            >
+            <Button onPress={handleVerifyOTP} disabled={loading} size="lg">
               <Text>{loading ? "Verifying..." : "Continue"}</Text>
             </Button>
             <Button
@@ -84,6 +87,7 @@ export function AuthCard() {
                 setStep("email");
                 setToken("");
               }}
+              size="lg"
             >
               <Text>Use a different email</Text>
             </Button>
@@ -91,19 +95,22 @@ export function AuthCard() {
         ) : (
           <>
             <Input
-              placeholder="Enter your email address"
+              placeholder={emailFocused ? "" : "Enter your email address"}
               value={email}
               onChangeText={setEmail}
+              onFocus={() => setEmailFocused(true)}
+              onBlur={() => setEmailFocused(false)}
               autoCapitalize="none"
               keyboardType="email-address"
               textContentType="emailAddress"
               autoComplete="email"
-              className="h-12 text-center"
+              className="text-center"
             />
             <Button
               onPress={handleRequestOTP}
               disabled={loading}
-              className="h-12"
+              // className="h-12"
+              size="lg"
             >
               <Text>{loading ? "Sending code..." : "Continue"}</Text>
             </Button>
