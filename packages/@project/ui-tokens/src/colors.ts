@@ -19,7 +19,8 @@ export const colors = {
   accentForeground: { light: "oklch(0.205 0 0)", dark: "oklch(0.985 0 0)" },
   destructive: { light: "oklch(0.577 0.245 27.325)", dark: "oklch(0.704 0.191 22.216)" },
   border: { light: "oklch(0.922 0 0)", dark: "oklch(1 0 0 / 10%)" },
-  input: { light: "oklch(0.922 0 0)", dark: "oklch(1 0 0 / 15%)" },
+  input: { light: "oklch(0.8 0 0)", dark: "oklch(1 0 0 / 25%)" },
+  placeholder: { light: "oklch(0.45 0 0)", dark: "oklch(0.6 0 0)" },
   ring: { light: "oklch(0.708 0 0)", dark: "oklch(0.556 0 0)" },
 } as const;
 

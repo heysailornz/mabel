@@ -44,6 +44,7 @@ module.exports = {
         },
         border: "var(--border)",
         input: "var(--input)",
+        placeholder: "var(--placeholder)",
         ring: "var(--ring)",
       },
       borderRadius: {

@@ -32,7 +32,7 @@ export function AuthCard() {
       Alert.alert("Error", result.error);
     } else {
       setStep("otp");
-      Alert.alert("Code Sent", "Check your email for the verification code.");
+      // Alert.alert("Code Sent", "Check your email for the verification code.");
     }
   };
 
@@ -60,7 +60,7 @@ export function AuthCard() {
         {step === "otp" ? (
           <>
             <Text className="text-center text-sm text-muted-foreground">
-              We sent a code to {email}
+              Mabel sent a code to {email}
             </Text>
             <Input
               placeholder="123456"
@@ -98,7 +98,7 @@ export function AuthCard() {
               keyboardType="email-address"
               textContentType="emailAddress"
               autoComplete="email"
-              className="h-12"
+              className="h-12 text-center"
             />
             <Button
               onPress={handleRequestOTP}

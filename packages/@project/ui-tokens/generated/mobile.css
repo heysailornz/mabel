@@ -22,7 +22,8 @@
   --accent-foreground: #171717;
   --destructive: #e7000b;
   --border: #e5e5e5;
-  --input: #e5e5e5;
+  --input: #bebebe;
+  --placeholder: #555555;
   --ring: #a1a1a1;
   --radius: 0.625rem;
 }
@@ -44,6 +45,7 @@
   --accent-foreground: #fafafa;
   --destructive: #ff6467;
   --border: rgba(255, 255, 255, 0.10);
-  --input: rgba(255, 255, 255, 0.15);
+  --input: rgba(255, 255, 255, 0.25);
+  --placeholder: #808080;
   --ring: #737373;
 }
