@@ -6,7 +6,7 @@ A production-ready monorepo boilerplate built with Turborepo, featuring a Next.j
 
 - **Monorepo**: Turborepo + pnpm
 - **Web**: Next.js 16.1
-- **Mobile**: Expo (managed workflow)
+- **Mobile**: Expo (managed workflow, SDK 54)
 - **Database**: Supabase
 - **Auth**: Supabase Auth
 - **Web Components**: shadcn/ui
@@ -74,11 +74,13 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 Note: Mobile requires your machine's local IP, not localhost:
 
 For WiFi:
+
 ```bash
 ipconfig getifaddr en0
 ```
 
 or for Ethernet:
+
 ```bash
 ipconfig getifaddr en1
 ```

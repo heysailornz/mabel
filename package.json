@@ -4,8 +4,6 @@
   "packageManager": "pnpm@9.15.0",
   "pnpm": {
     "overrides": {
-      "@types/react": "^19",
-      "@types/react-dom": "^19",
       "next": "16.1.1"
     }
   },
