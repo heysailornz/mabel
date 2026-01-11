@@ -1,18 +1,18 @@
 import { z } from "zod";
 
-export const signUpSchema = z.object({
+// Request OTP
+export const requestOTPSchema = z.object({
   email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  fullName: z.string().optional(),
 });
 
-export const signInSchema = z.object({
+// Verify OTP
+export const verifyOTPSchema = z.object({
   email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  token: z.string().length(6, "Code must be 6 digits"),
 });
 
-export type SignUpData = z.infer<typeof signUpSchema>;
-export type SignInData = z.infer<typeof signInSchema>;
+export type RequestOTPData = z.infer<typeof requestOTPSchema>;
+export type VerifyOTPData = z.infer<typeof verifyOTPSchema>;
 
 export interface AuthResult {
   success?: boolean;

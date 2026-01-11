@@ -1,32 +1,18 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import {
-  signUpUser,
-  signInUser,
-  signOutUser,
-} from "@project/core/auth";
-import type { SignUpData, SignInData } from "@project/core/auth";
+import { sendOTP, verifyOTP, signOutUser } from "@project/core/auth";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
-// Re-export types for use in components
-export type { SignUpData, SignInData } from "@project/core/auth";
-
-export async function signUp(data: SignUpData) {
+export async function requestSignInOTP(email: string) {
   const supabase = await createClient();
-  const result = await signUpUser(supabase, data);
-
-  if (result.success) {
-    revalidatePath("/", "layout");
-  }
-
-  return result;
+  return await sendOTP(supabase, email);
 }
 
-export async function signIn(data: SignInData) {
+export async function verifySignInOTP(email: string, token: string) {
   const supabase = await createClient();
-  const result = await signInUser(supabase, data);
+  const result = await verifyOTP(supabase, email, token);
 
   if (result.success) {
     revalidatePath("/", "layout");
@@ -44,7 +30,5 @@ export async function signOut(): Promise<void> {
     redirect("/");
   }
 
-  // If we get here, there was an error, but we still redirect
-  // since form actions can't easily show errors
   redirect("/");
 }

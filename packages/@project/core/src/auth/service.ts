@@ -1,24 +1,21 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { SignUpData, SignInData, AuthResult } from "./types";
+import type { AuthResult } from "./types";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnySupabaseClient = SupabaseClient<any, any, any>;
 
 /**
- * Core auth service - platform agnostic
- * Accepts a Supabase client from the caller (web or mobile)
+ * Send OTP to email
+ * Works for both new and existing users
  */
-export async function signUpUser(
+export async function sendOTP(
   supabase: AnySupabaseClient,
-  data: SignUpData
+  email: string
 ): Promise<AuthResult> {
-  const { error } = await supabase.auth.signUp({
-    email: data.email,
-    password: data.password,
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
     options: {
-      data: {
-        full_name: data.fullName,
-      },
+      shouldCreateUser: true,
     },
   });
 
@@ -29,13 +26,18 @@ export async function signUpUser(
   return { success: true };
 }
 
-export async function signInUser(
+/**
+ * Verify OTP and complete authentication
+ */
+export async function verifyOTP(
   supabase: AnySupabaseClient,
-  data: SignInData
+  email: string,
+  token: string
 ): Promise<AuthResult> {
-  const { error } = await supabase.auth.signInWithPassword({
-    email: data.email,
-    password: data.password,
+  const { error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: "email",
   });
 
   if (error) {
@@ -45,6 +47,9 @@ export async function signInUser(
   return { success: true };
 }
 
+/**
+ * Sign out current user
+ */
 export async function signOutUser(
   supabase: AnySupabaseClient
 ): Promise<AuthResult> {
@@ -57,6 +62,9 @@ export async function signOutUser(
   return { success: true };
 }
 
+/**
+ * Get current authenticated user
+ */
 export async function getCurrentUser(supabase: AnySupabaseClient) {
   const {
     data: { user },

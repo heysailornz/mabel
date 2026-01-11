@@ -329,6 +329,7 @@ Only include genuinely missing or unclear elements. Return empty array if docume
 ### 5. Recording & Upload Architecture
 
 **Audio Format:**
+
 - Format: AAC (mono, 128kbps)
 - File size: ~1 MB per minute of recording
 - Typical consultation (30 min): ~30 MB
@@ -336,6 +337,7 @@ Only include genuinely missing or unclear elements. Return empty array if docume
 **Upload Method: TUS Resumable Uploads**
 
 Supabase Storage supports the TUS protocol for resumable uploads, which is ideal for mobile networks:
+
 - Uploads in 6MB chunks
 - Automatic retry on failure
 - Can pause/resume uploads
@@ -344,11 +346,11 @@ Supabase Storage supports the TUS protocol for resumable uploads, which is ideal
 
 **Upload Time Estimates:**
 
-| Duration | File Size | 4G LTE | 3G | Poor Signal |
-|----------|-----------|--------|-----|-------------|
-| 15 min | ~15 MB | ~6 sec | ~1 min | ~4 min |
-| 30 min | ~30 MB | ~12 sec | ~2 min | ~8 min |
-| 60 min | ~60 MB | ~24 sec | ~4 min | ~16 min |
+| Duration | File Size | 4G LTE  | 3G     | Poor Signal |
+| -------- | --------- | ------- | ------ | ----------- |
+| 15 min   | ~15 MB    | ~6 sec  | ~1 min | ~4 min      |
+| 30 min   | ~30 MB    | ~12 sec | ~2 min | ~8 min      |
+| 60 min   | ~60 MB    | ~24 sec | ~4 min | ~16 min     |
 
 **Upload Flow:**
 
@@ -585,6 +587,7 @@ async function saveTranscript(
 ### 8. Payments & Credits
 
 **Credit System:**
+
 - New users receive 5 free credits on signup
 - Each transcription costs 1 credit
 - Minimum purchase: 10 credits
@@ -860,10 +863,12 @@ mabel/
 
 ### Phase 1: Core Infrastructure
 
-- [ ] Update database schema (rename profiles → practitioners, add new tables)
-- [ ] Set up email OTP authentication (replace password auth)
-- [ ] Create storage bucket for recordings
-- [ ] Set up Edge Functions directory structure
+- [x] Update database schema (rename profiles → practitioners, add new tables)
+- [x] Set up email OTP authentication (replace password auth)
+- [x] Create storage bucket for recordings
+- [x] Set up Edge Functions directory structure
+- [ ] Make branded auth UI for web
+- [ ] make branded auth UI for mobile
 
 ### Phase 2: Recording & Upload
 

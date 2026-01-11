@@ -1,19 +1,19 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import {
-  signUpUser,
-  signInUser,
+  sendOTP,
+  verifyOTP,
   signOutUser,
   getCurrentUser,
 } from "@project/core/auth";
-import type { SignUpData, SignInData, AuthResult } from "@project/core/auth";
+import type { AuthResult } from "@project/core/auth";
 import type { User } from "@supabase/supabase-js";
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signUp: (data: SignUpData) => Promise<AuthResult>;
-  signIn: (data: SignInData) => Promise<AuthResult>;
+  requestOTP: (email: string) => Promise<AuthResult>;
+  verifyOTP: (email: string, token: string) => Promise<AuthResult>;
   signOut: () => Promise<AuthResult>;
 }
 
@@ -39,23 +39,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (data: SignUpData) => {
-    const result = await signUpUser(supabase, data);
-    return result;
+  const requestOTPHandler = async (email: string) => {
+    return await sendOTP(supabase, email);
   };
 
-  const signIn = async (data: SignInData) => {
-    const result = await signInUser(supabase, data);
-    return result;
+  const verifyOTPHandler = async (email: string, token: string) => {
+    return await verifyOTP(supabase, email, token);
   };
 
-  const signOut = async () => {
-    const result = await signOutUser(supabase);
-    return result;
+  const signOutHandler = async () => {
+    return await signOutUser(supabase);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        requestOTP: requestOTPHandler,
+        verifyOTP: verifyOTPHandler,
+        signOut: signOutHandler,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

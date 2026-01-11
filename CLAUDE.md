@@ -557,7 +557,30 @@ CREATE POLICY "Public posts are viewable by everyone" ON posts
   FOR SELECT USING (published = true);
 
 CREATE POLICY "Users can insert their own posts" ON posts
-  FOR INSERT WITH CHECK (auth.uid() = author_id);
+  FOR INSERT WITH CHECK ((select auth.uid()) = author_id);
+```
+
+**RLS Performance Optimization:** Always wrap `auth.uid()` and other `auth.*` functions in a subquery. This evaluates the function once per query instead of once per row:
+
+```sql
+-- ❌ Bad: auth.uid() evaluated for every row
+CREATE POLICY "bad_policy" ON posts
+  FOR SELECT USING (auth.uid() = author_id);
+
+-- ✅ Good: auth.uid() evaluated once per query
+CREATE POLICY "good_policy" ON posts
+  FOR SELECT USING ((select auth.uid()) = author_id);
+```
+
+**SECURITY DEFINER functions:** Always set an empty search_path to prevent search_path hijacking:
+
+```sql
+CREATE OR REPLACE FUNCTION public.my_function()
+RETURNS void AS $$
+BEGIN
+  -- function body
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
 ```
 
 ## 🚀 Performance Optimization
