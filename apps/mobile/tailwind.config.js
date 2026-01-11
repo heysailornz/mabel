@@ -7,6 +7,10 @@ module.exports = {
   presets: [require("nativewind/preset")],
   theme: {
     extend: {
+      fontFamily: {
+        noto: ["NotoSerif"],
+        "noto-semibold": ["NotoSerif_SemiBold"],
+      },
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
