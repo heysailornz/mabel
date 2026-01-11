@@ -75,7 +75,7 @@ export default function AuthScreen() {
           }}
         >
           <Card style={getNativeShadow("md")}>
-            <CardContent className="gap-4 p-6">
+            <CardContent className="gap-4 p-4">
               {step === "otp" ? (
                 <>
                   <Text className="text-center text-sm text-muted-foreground">
