@@ -10,7 +10,89 @@ This is a monorepo boilerplate for building full-stack applications with a Next.
 - **Database**: Supabase
 - **Auth**: Supabase Auth
 - **Web components**: shadcn/ui
-- **Mobile components**: React Native
+- **Mobile components**: React Native Reusables + NativeWind
+- **Shared tokens**: `@project/ui-tokens` (visual parity between web and mobile)
+
+# React Native Reusables + NativeWind Setup
+
+React Native Reusables brings shadcn/ui to React Native. Components are installed via CLI and styled with NativeWind (Tailwind for React Native).
+
+## Adding Components
+
+```bash
+cd apps/mobile
+npx @react-native-reusables/cli@latest add button card input text
+```
+
+Components are added to `apps/mobile/components/ui/` and use the same patterns as shadcn/ui on web.
+
+## Key Files
+
+```
+apps/mobile/
+├── global.css              # Tailwind imports + CSS variables
+├── tailwind.config.js      # NativeWind config with theme colors
+├── metro.config.js         # Wrapped with withNativeWind
+├── babel.config.js         # NativeWind + Reanimated presets
+├── nativewind-env.d.ts     # TypeScript types
+├── components/ui/          # RNR components (button, card, input, text)
+└── lib/utils.ts            # cn() utility function
+```
+
+## Usage Pattern
+
+```tsx
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Text } from "@/components/ui/text";
+
+export function MyComponent() {
+  return (
+    <Card className="rounded-3xl shadow-xl">
+      <CardContent className="gap-4 p-6">
+        <Input placeholder="Email" className="h-12" />
+        <Button className="h-12">
+          <Text>Continue</Text>
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+## Safe Area Handling
+
+Always use `useSafeAreaInsets` for content that needs to avoid system UI (notches, home indicator):
+
+```tsx
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+function MyScreen() {
+  const insets = useSafeAreaInsets();
+
+  return (
+    <View style={{ paddingBottom: Math.max(insets.bottom, 24) + 24 }}>
+      {/* Content won't be obscured by home indicator */}
+    </View>
+  );
+}
+```
+
+## Shared Design Tokens
+
+Design tokens are defined in `packages/@project/ui-tokens` and shared between web and mobile:
+
+```bash
+# After changing tokens:
+pnpm --filter @project/ui-tokens generate
+```
+
+This generates `generated/web.css` and `generated/mobile.css` with matching CSS variables.
+
+## Dark Mode
+
+NativeWind supports dark mode via the `.dark` class. The shared tokens include both light and dark variants.
 
 # Next.js 16.1 + Supabase + TypeScript Best Practices
 

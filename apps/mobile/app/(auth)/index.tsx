@@ -1,20 +1,17 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-} from "react-native";
+import { View, Alert, KeyboardAvoidingView, Platform } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/auth-context";
 import { requestOTPSchema, verifyOTPSchema } from "@project/core/auth";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Text } from "@/components/ui/text";
 
 export default function AuthScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { requestOTP, verifyOTP } = useAuth();
   const [step, setStep] = useState<"email" | "otp">("email");
   const [email, setEmail] = useState("");
@@ -58,137 +55,92 @@ export default function AuthScreen() {
     }
   };
 
-  if (step === "otp") {
-    return (
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.container}
-      >
-        <View style={styles.content}>
-          <Text style={styles.title}>Enter Code</Text>
-          <Text style={styles.subtitle}>We sent a code to {email}</Text>
-
-          <TextInput
-            placeholder="123456"
-            value={token}
-            onChangeText={setToken}
-            keyboardType="number-pad"
-            maxLength={6}
-            style={styles.input}
-            placeholderTextColor="#999"
-            autoFocus
-          />
-
-          <TouchableOpacity
-            onPress={handleVerifyOTP}
-            disabled={loading}
-            style={[styles.button, loading && styles.buttonDisabled]}
-          >
-            <Text style={styles.buttonText}>
-              {loading ? "Verifying..." : "Continue"}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.linkButton}
-            onPress={() => {
-              setStep("email");
-              setToken("");
-            }}
-          >
-            <Text style={styles.linkText}>Use a different email</Text>
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
-    );
-  }
-
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
+      className="flex-1 bg-background"
     >
-      <View style={styles.content}>
-        <Text style={styles.title}>Welcome</Text>
-        <Text style={styles.subtitle}>
-          Enter your email to sign in or create an account
-        </Text>
+      <View className="flex-1">
+        {/* Branding area */}
+        <View className="flex-1 items-center justify-center">
+          <Text className="text-4xl font-bold text-foreground">MyApp</Text>
+        </View>
 
-        <TextInput
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          style={styles.input}
-          placeholderTextColor="#999"
-        />
-
-        <TouchableOpacity
-          onPress={handleRequestOTP}
-          disabled={loading}
-          style={[styles.button, loading && styles.buttonDisabled]}
+        {/* Auth card at bottom */}
+        <View
+          style={{
+            paddingBottom: Math.max(insets.bottom, 24) + 24,
+            paddingHorizontal: 24,
+          }}
         >
-          <Text style={styles.buttonText}>
-            {loading ? "Sending code..." : "Continue"}
-          </Text>
-        </TouchableOpacity>
+          <Card
+            className="border-0 shadow-2xl"
+            style={{
+              borderRadius: 24,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.12,
+              shadowRadius: 24,
+              elevation: 12,
+            }}
+          >
+            <CardContent className="gap-4 p-6">
+              {step === "otp" ? (
+                <>
+                  <Text className="text-center text-sm text-muted-foreground">
+                    We sent a code to {email}
+                  </Text>
+                  <Input
+                    placeholder="123456"
+                    value={token}
+                    onChangeText={setToken}
+                    keyboardType="number-pad"
+                    maxLength={6}
+                    autoFocus
+                    className="h-12 text-center text-lg"
+                  />
+                  <Button
+                    onPress={handleVerifyOTP}
+                    disabled={loading}
+                    className="h-12"
+                  >
+                    <Text>{loading ? "Verifying..." : "Continue"}</Text>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onPress={() => {
+                      setStep("email");
+                      setToken("");
+                    }}
+                  >
+                    <Text>Use a different email</Text>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Input
+                    placeholder="Email"
+                    value={email}
+                    onChangeText={setEmail}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    textContentType="emailAddress"
+                    autoComplete="email"
+                    className="h-12"
+                  />
+                  <Button
+                    onPress={handleRequestOTP}
+                    disabled={loading}
+                    className="h-12"
+                  >
+                    <Text>{loading ? "Sending code..." : "Continue"}</Text>
+                  </Button>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  content: {
-    flex: 1,
-    padding: 24,
-    justifyContent: "center",
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    marginBottom: 8,
-    color: "#000",
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#666",
-    marginBottom: 32,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 16,
-    fontSize: 16,
-    backgroundColor: "#f9f9f9",
-  },
-  button: {
-    backgroundColor: "#000",
-    padding: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  buttonDisabled: {
-    backgroundColor: "#666",
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 16,
-  },
-  linkButton: {
-    marginTop: 16,
-    alignItems: "center",
-  },
-  linkText: {
-    color: "#666",
-    fontSize: 14,
-  },
-});
