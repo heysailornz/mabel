@@ -17,6 +17,7 @@
     "@project/config": "workspace:*",
     "@project/core": "workspace:*",
     "@project/db": "workspace:*",
+    "@project/ui-tokens": "workspace:^",
     "@supabase/supabase-js": "^2.49.8",
     "expo": "~54.0.31",
     "expo-constants": "~18.0.13",
@@ -24,8 +25,10 @@
     "expo-router": "~6.0.21",
     "expo-secure-store": "~15.0.8",
     "expo-status-bar": "~3.0.9",
+    "nativewind": "^4.2.1",
     "react": "19.1.0",
     "react-native": "0.81.5",
+    "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "5.6.2",
     "react-native-screens": "~4.16.0",
     "zod": "^3.25.42"
@@ -36,6 +39,8 @@
     "@project/tsconfig": "workspace:*",
     "@types/node": "^22",
     "@types/react": "~19.1.17",
+    "prettier-plugin-tailwindcss": "^0.7.2",
+    "tailwindcss": "^3.4.17",
     "typescript": "^5"
   }
 }

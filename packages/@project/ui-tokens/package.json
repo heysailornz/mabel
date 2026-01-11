@@ -1,0 +1,30 @@
+{
+  "name": "@project/ui-tokens",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./generated/web.css": "./generated/web.css",
+    "./generated/mobile.css": "./generated/mobile.css"
+  },
+  "scripts": {
+    "build": "tsup && pnpm generate",
+    "generate": "tsx src/generate.ts",
+    "clean": "rm -rf dist generated/*.css",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@project/tsconfig": "workspace:*",
+    "@types/node": "^20.17.57",
+    "tsup": "^8.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5"
+  }
+}
