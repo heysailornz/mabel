@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/auth-context";
 import { requestOTPSchema, verifyOTPSchema } from "@project/core/auth";
+import { getNativeShadow } from "@project/ui-tokens";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -73,17 +74,7 @@ export default function AuthScreen() {
             paddingHorizontal: 24,
           }}
         >
-          <Card
-            className="border-0 shadow-2xl"
-            style={{
-              borderRadius: 24,
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 8 },
-              shadowOpacity: 0.12,
-              shadowRadius: 24,
-              elevation: 12,
-            }}
-          >
+          <Card style={getNativeShadow("md")}>
             <CardContent className="gap-4 p-6">
               {step === "otp" ? (
                 <>
@@ -119,7 +110,7 @@ export default function AuthScreen() {
               ) : (
                 <>
                   <Input
-                    placeholder="Email"
+                    placeholder="Enter your email address"
                     value={email}
                     onChangeText={setEmail}
                     autoCapitalize="none"

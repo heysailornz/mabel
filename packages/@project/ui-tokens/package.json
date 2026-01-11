@@ -16,7 +16,9 @@
   },
   "scripts": {
     "build": "tsup && pnpm generate",
+    "dev": "tsup --watch & pnpm generate:watch",
     "generate": "tsx src/generate.ts",
+    "generate:watch": "tsx watch src/generate.ts",
     "clean": "rm -rf dist generated/*.css",
     "typecheck": "tsc --noEmit"
   },
