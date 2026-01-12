@@ -1,0 +1,162 @@
+<!doctype html>
+<html>
+  <body>
+    <div
+      style="
+        background-color: #d0d1cc;
+        color: #000000;
+        font-family:
+          &quot;Helvetica Neue&quot;, &quot;Arial Nova&quot;,
+          &quot;Nimbus Sans&quot;, Arial, sans-serif;
+        font-size: 16px;
+        font-weight: 400;
+        letter-spacing: 0.15008px;
+        line-height: 1.5;
+        margin: 0;
+        padding: 32px 0;
+        min-height: 100%;
+        width: 100%;
+      "
+    >
+      <table
+        align="center"
+        width="100%"
+        style="
+          margin: 0 auto;
+          max-width: 600px;
+          background-color: #ffffff;
+          border-radius: 32px;
+          border: 1px solid #e6e6e6;
+        "
+        role="presentation"
+        cellspacing="0"
+        cellpadding="0"
+        border="0"
+      >
+        <tbody>
+          <tr style="width: 100%">
+            <td>
+              <div style="padding: 54px 24px 24px 24px; text-align: center">
+                <a
+                  href="{{ .SiteURL }}"
+                  style="text-decoration: none"
+                  target="_blank"
+                  ><img
+                    alt="Mabel"
+                    src="{{ .SiteURL }}/images/emails/logo.png"
+                    height="38"
+                    style="
+                      height: 38px;
+                      outline: none;
+                      border: none;
+                      text-decoration: none;
+                      vertical-align: middle;
+                      display: inline-block;
+                      max-width: 100%;
+                    "
+                /></a>
+              </div>
+              <div
+                style="
+                  color: #000000;
+                  font-size: 20px;
+                  font-family:
+                    &quot;Helvetica Neue&quot;, &quot;Arial Nova&quot;,
+                    &quot;Nimbus Sans&quot;, Arial, sans-serif;
+                  font-weight: normal;
+                  text-align: center;
+                  padding: 16px 24px 16px 24px;
+                "
+              >
+                Here is your log in code:
+              </div>
+              <h1
+                style="
+                  font-weight: bold;
+                  text-align: center;
+                  margin: 0;
+                  font-family:
+                    &quot;Nimbus Mono PS&quot;, &quot;Courier New&quot;,
+                    &quot;Cutive Mono&quot;, monospace;
+                  font-size: 32px;
+                  padding: 16px 24px 16px 24px;
+                "
+              >
+                {{ .Token }}
+              </h1>
+              <div style="text-align: center; padding: 16px 24px 16px 24px">
+                <a
+                  href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=magiclink"
+                  style="
+                    color: #ffffff;
+                    font-size: 20px;
+                    font-family:
+                      &quot;Helvetica Neue&quot;, &quot;Arial Nova&quot;,
+                      &quot;Nimbus Sans&quot;, Arial, sans-serif;
+                    font-weight: bold;
+                    background-color: #000000;
+                    border-radius: 15px;
+                    display: inline-block;
+                    padding: 12px 20px;
+                    text-decoration: none;
+                  "
+                  target="_blank"
+                  ><span
+                    ><!--[if mso
+                      ]><i
+                        style="
+                          letter-spacing: 20px;
+                          mso-font-width: -100%;
+                          mso-text-raise: 30;
+                        "
+                        hidden
+                        >&nbsp;</i
+                      ><!
+                    [endif]--></span
+                  ><span>Click this button to login</span
+                  ><span
+                    ><!--[if mso
+                      ]><i
+                        style="letter-spacing: 20px; mso-font-width: -100%"
+                        hidden
+                        >&nbsp;</i
+                      ><!
+                    [endif]--></span
+                  ></a
+                >
+              </div>
+              <div
+                style="
+                  color: #868686;
+                  font-size: 16px;
+                  font-family:
+                    &quot;Helvetica Neue&quot;, &quot;Arial Nova&quot;,
+                    &quot;Nimbus Sans&quot;, Arial, sans-serif;
+                  font-weight: normal;
+                  text-align: center;
+                  padding: 16px 24px 16px 24px;
+                "
+              >
+                This code will expire in 5 minutes.
+              </div>
+              <div
+                style="
+                  color: #868686;
+                  font-size: 14px;
+                  font-family:
+                    &quot;Helvetica Neue&quot;, &quot;Arial Nova&quot;,
+                    &quot;Nimbus Sans&quot;, Arial, sans-serif;
+                  font-weight: normal;
+                  text-align: center;
+                  padding: 16px 24px 16px 24px;
+                "
+              >
+                Didn&#x27;t expect this email? It&#x27;s safe to ignore it.
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>

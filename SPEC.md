@@ -869,7 +869,7 @@ mabel/
 - [x] Set up Edge Functions directory structure
 - [x] Make branded auth UI for web
 - [x] make branded auth UI for mobile
-- [ ] transactional email styling
+- [x] transactional email styling
 
 ### Phase 2: Recording & Upload
 

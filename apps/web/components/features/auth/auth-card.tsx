@@ -5,6 +5,12 @@ import { requestSignInOTP, verifySignInOTP } from "@/server/actions/auth";
 import { useAuthFlow } from "@project/hooks/auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+  InputOTPSeparator,
+} from "@/components/ui/input-otp";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
@@ -37,26 +43,42 @@ export function AuthCard() {
     <Card className="w-full max-w-md min-w-sm shadow-md">
       <CardContent className="flex flex-col gap-4 px-4">
         {auth.step === "otp" ? (
-          <form onSubmit={(e) => { e.preventDefault(); auth.handleVerifyOTP(); }} className="flex flex-col gap-4">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              auth.handleVerifyOTP();
+            }}
+            className="flex flex-col items-center gap-4"
+          >
             <p className="text-center text-sm text-foreground">
               Mabel sent a code to{" "}
               <span className="font-semibold">{auth.email}</span>
             </p>
-            <Input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
+            <InputOTP
               maxLength={6}
-              placeholder={auth.otpPlaceholder}
               value={auth.token}
-              onChange={(e) => auth.setToken(e.target.value)}
-              onFocus={() => auth.setOtpFocused(true)}
-              onBlur={() => auth.setOtpFocused(false)}
-              autoComplete="one-time-code"
-              className="h-12 text-center text-lg"
+              onChange={auth.setToken}
               autoFocus
-            />
-            <Button type="submit" size="lg" disabled={auth.loading}>
+              autoComplete="one-time-code"
+              data-1p-ignore
+              data-lpignore="true"
+              data-form-type="other"
+            >
+              <InputOTPGroup>
+                <InputOTPSlot index={0} className="h-12 w-10 text-lg" />
+                <InputOTPSlot index={1} className="h-12 w-10 text-lg" />
+                <InputOTPSlot index={2} className="h-12 w-10 text-lg" />
+                <InputOTPSlot index={3} className="h-12 w-10 text-lg" />
+                <InputOTPSlot index={4} className="h-12 w-10 text-lg" />
+                <InputOTPSlot index={5} className="h-12 w-10 text-lg" />
+              </InputOTPGroup>
+            </InputOTP>
+            <Button
+              type="submit"
+              size="lg"
+              disabled={auth.loading}
+              className="w-full"
+            >
               {auth.loading ? "Verifying..." : "Continue"}
             </Button>
             <Button
@@ -64,12 +86,19 @@ export function AuthCard() {
               variant="ghost"
               size="lg"
               onClick={auth.handleBackToEmail}
+              className="w-full"
             >
               Use a different email
             </Button>
           </form>
         ) : (
-          <form onSubmit={(e) => { e.preventDefault(); auth.handleRequestOTP(); }} className="flex flex-col gap-4">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              auth.handleRequestOTP();
+            }}
+            className="flex flex-col gap-4"
+          >
             <Input
               type="email"
               placeholder={auth.emailPlaceholder}
