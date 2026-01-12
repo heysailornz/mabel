@@ -26,6 +26,539 @@ A mobile-first medical transcription system that allows practitioners to dictate
 
 ---
 
+## Conversations
+
+Conversations are the primary interface for interacting with the transcription system. Each conversation is a chat-style thread containing practitioner recordings, AI responses (transcriptions, suggestions, summaries), and user actions (edits, accepted suggestions).
+
+### Key Decisions
+
+| Aspect | Decision |
+|--------|----------|
+| Recordings per conversation | 1:many (multiple recordings allowed per conversation) |
+| AI participant types | Separate: `transcription_ai`, `suggestions_ai`, `summary_ai` |
+| User actions tracked | Edits and accepted suggestions appear as messages |
+| Recording platform | Mobile preferred; web allows recording if microphone available |
+| Conversation titles | Auto-generated from first transcript summary (not user-editable) |
+| Conversation lifecycle | `active` or `archived` only (no "completed" state) |
+
+### Conversation Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 1. RECORD                                                                   │
+│    Practitioner taps record → conversation created (if new)                 │
+│    → recording_upload message inserted immediately (status: recording)     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 2. UPLOAD                                                                   │
+│    Recording stops → file saved locally → upload begins                     │
+│    → recording_upload message updated (status: uploading, progress: 0-100) │
+│    → Upload completes → status: pending                                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 3. PROCESS                                                                  │
+│    Edge function triggered → status_update message (status: processing)    │
+│    → Deepgram transcription → transcription_result message                 │
+│    → Claude suggestions → suggestion message (if any missing elements)     │
+│    → Claude summary → summary message + conversation.title updated         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 4. REVIEW                                                                   │
+│    Practitioner views on mobile or web                                      │
+│    → Edits transcript → user_edit message                                  │
+│    → Accepts suggestion → accepted_suggestion message                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 5. EXPORT                                                                   │
+│    Practitioner exports/copies final transcript                             │
+│    → Compiled from all transcription_result + user_edit messages           │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Participant Types
+
+| Type | Description | Avatar/Icon |
+|------|-------------|-------------|
+| `practitioner` | The logged-in user | User's avatar or initials |
+| `transcription_ai` | Deepgram transcription results | Microphone icon |
+| `suggestions_ai` | Claude-generated suggestions for missing elements | Lightbulb icon |
+| `summary_ai` | Claude-generated transcript summary | Document icon |
+| `system` | Status updates, errors, prompts | Info/warning icon |
+
+### Message Types
+
+Each message has a `participant_type`, `message_type`, `content` (text), and `metadata` (JSON).
+
+#### `recording_upload` (participant: practitioner)
+
+Inserted immediately when recording starts. Updated as upload progresses.
+
+```typescript
+{
+  participant_type: "practitioner",
+  message_type: "recording_upload",
+  content: null,
+  metadata: {
+    recording_id: "uuid",
+    duration_seconds: 180,
+    status: "recording" | "uploading" | "pending" | "processing" | "completed" | "failed",
+    upload_progress: 0-100,  // Only during upload
+    error_message?: string   // Only on failure
+  }
+}
+```
+
+**UI Rendering:**
+- `recording`: Pulsing record indicator with duration
+- `uploading`: Progress bar with percentage
+- `pending`: "Waiting to process" with spinner
+- `processing`: "Transcribing..." with spinner
+- `completed`: Checkmark, duration display
+- `failed`: Error message with retry button
+
+#### `transcription_result` (participant: transcription_ai)
+
+The transcribed text from Deepgram, after vocabulary corrections applied.
+
+```typescript
+{
+  participant_type: "transcription_ai",
+  message_type: "transcription_result",
+  content: "Patient presents with...", // The enhanced transcript text
+  metadata: {
+    recording_id: "uuid",
+    transcript_id: "uuid",
+    raw_text: "...",           // Original before vocabulary corrections
+    word_count: 450,
+    confidence: 0.94           // Deepgram confidence score
+  }
+}
+```
+
+**UI Rendering:**
+- Expandable text block (collapsed shows first ~200 chars)
+- "Edit" button to modify transcript
+- Shows word count and confidence badge
+
+#### `suggestion` (participant: suggestions_ai)
+
+Claude-generated suggestions for missing documentation elements.
+
+```typescript
+{
+  participant_type: "suggestions_ai",
+  message_type: "suggestion",
+  content: "I noticed some elements that may need attention:", // Intro text
+  metadata: {
+    recording_id: "uuid",
+    suggestions: [
+      {
+        id: "uuid",
+        type: "missing_element",
+        element: "follow_up",
+        message: "No follow-up timeframe specified",
+        suggested_text: "Follow up in [X] weeks",
+        status: "pending" | "accepted" | "dismissed"
+      },
+      {
+        id: "uuid",
+        type: "missing_element",
+        element: "medication_dosage",
+        message: "Medication dosage not specified for Lisinopril",
+        suggested_text: "Lisinopril [X]mg daily",
+        status: "pending"
+      }
+    ]
+  }
+}
+```
+
+**UI Rendering:**
+- Card with list of suggestions
+- Each suggestion has "Accept" and "Dismiss" buttons
+- Accepted suggestions create `accepted_suggestion` message
+- Dismissed suggestions update status in metadata
+
+#### `summary` (participant: summary_ai)
+
+One-sentence summary for list display. Also updates `conversation.title`.
+
+```typescript
+{
+  participant_type: "summary_ai",
+  message_type: "summary",
+  content: "Follow-up visit for hypertension management with medication adjustment",
+  metadata: {
+    recording_id: "uuid"
+  }
+}
+```
+
+**UI Rendering:**
+- Subtle summary card
+- Displayed at top of conversation or inline
+
+#### `user_edit` (participant: practitioner)
+
+Tracks when practitioner edits a transcript.
+
+```typescript
+{
+  participant_type: "practitioner",
+  message_type: "user_edit",
+  content: "Patient presents with controlled hypertension...", // Full edited text
+  metadata: {
+    recording_id: "uuid",
+    transcript_id: "uuid",
+    original_text: "...",      // Text before this edit
+    edit_summary: "Corrected medication name" // Optional description
+  }
+}
+```
+
+**UI Rendering:**
+- "Edited transcript" indicator
+- Option to view diff from original
+
+#### `accepted_suggestion` (participant: practitioner)
+
+Records when a suggestion is accepted and applied.
+
+```typescript
+{
+  participant_type: "practitioner",
+  message_type: "accepted_suggestion",
+  content: null,
+  metadata: {
+    suggestion_message_id: "uuid",  // Reference to original suggestion message
+    suggestion_id: "uuid",          // ID within suggestions array
+    applied_text: "Follow up in 2 weeks"
+  }
+}
+```
+
+**UI Rendering:**
+- Small confirmation: "Added: Follow up in 2 weeks"
+
+#### `status_update` (participant: system)
+
+System-generated status messages.
+
+```typescript
+{
+  participant_type: "system",
+  message_type: "status_update",
+  content: "Processing your recording...",
+  metadata: {
+    recording_id?: "uuid",
+    status: "info" | "warning" | "error",
+    action?: {
+      label: "Retry",
+      type: "retry_upload" | "retry_processing"
+    }
+  }
+}
+```
+
+**UI Rendering:**
+- Centered, muted text
+- Optional action button
+
+### Routes & Navigation
+
+#### Web Routes
+
+| Route | Description | Auth Required |
+|-------|-------------|---------------|
+| `/auth` | Email OTP login | No |
+| `/hello` | New conversation prompt (main entry after login) | Yes |
+| `/c/[id]` | View specific conversation | Yes |
+| `/settings` | User preferences | Yes |
+| `/credits` | Buy credits | Yes |
+
+**Web Layout:**
+- Persistent side menu with conversation history
+- "New Chat" button at top of side menu
+- Main content area shows current route
+- Side menu shows: title (or "New Conversation"), last message preview, relative timestamp
+
+#### Mobile Routes
+
+| Route | Description |
+|-------|-------------|
+| `/(app)/` | Current/new conversation view |
+| `/(app)/c/[id]` | Specific conversation (deep link) |
+| `/(app)/settings` | User preferences |
+
+**Mobile Layout:**
+- Drawer navigation (swipe from left or tap hamburger)
+- Drawer contains conversation history list
+- Main screen shows conversation with floating record button
+- Header: hamburger menu, title, new chat button
+
+### Realtime Subscriptions
+
+Subscribe to new messages in the current conversation:
+
+```typescript
+const channel = supabase
+  .channel(`conversation:${conversationId}`)
+  .on('postgres_changes', {
+    event: 'INSERT',
+    schema: 'public',
+    table: 'conversation_messages',
+    filter: `conversation_id=eq.${conversationId}`
+  }, (payload) => {
+    // Add new message to local state
+    addMessage(payload.new as ConversationMessage);
+  })
+  .on('postgres_changes', {
+    event: 'UPDATE',
+    schema: 'public',
+    table: 'conversation_messages',
+    filter: `conversation_id=eq.${conversationId}`
+  }, (payload) => {
+    // Update existing message (e.g., upload progress, suggestion status)
+    updateMessage(payload.new as ConversationMessage);
+  })
+  .subscribe();
+```
+
+Also subscribe to conversation updates (for title changes):
+
+```typescript
+supabase
+  .channel(`conversation-meta:${conversationId}`)
+  .on('postgres_changes', {
+    event: 'UPDATE',
+    schema: 'public',
+    table: 'conversations',
+    filter: `id=eq.${conversationId}`
+  }, (payload) => {
+    updateConversationMeta(payload.new);
+  })
+  .subscribe();
+```
+
+### Server Actions / API
+
+#### Conversations
+
+```typescript
+// Create new conversation
+async function createConversation(): Promise<{ id: string }>
+
+// Get conversation with messages
+async function getConversation(id: string): Promise<{
+  conversation: Conversation;
+  messages: ConversationMessage[];
+}>
+
+// List conversations for current user
+async function getConversations(): Promise<{
+  conversations: Array<Conversation & {
+    last_message?: ConversationMessage;
+    message_count: number;
+  }>;
+}>
+
+// Archive conversation
+async function archiveConversation(id: string): Promise<void>
+
+// Unarchive conversation
+async function unarchiveConversation(id: string): Promise<void>
+```
+
+#### Messages
+
+```typescript
+// Add message (for practitioner messages: user_edit, accepted_suggestion)
+async function addMessage(
+  conversationId: string,
+  message: {
+    participant_type: ParticipantType;
+    message_type: MessageType;
+    content?: string;
+    metadata?: Record<string, unknown>;
+  }
+): Promise<ConversationMessage>
+
+// Update message metadata (for upload progress, suggestion status)
+async function updateMessageMetadata(
+  messageId: string,
+  metadata: Record<string, unknown>
+): Promise<void>
+```
+
+### Integration with Recording Flow
+
+When a recording is created, it must be linked to a conversation:
+
+```typescript
+async function startRecording(conversationId?: string) {
+  // 1. Create conversation if not provided
+  const convId = conversationId ?? (await createConversation()).id;
+
+  // 2. Create recording row linked to conversation
+  const recording = await supabase.from('recordings').insert({
+    practitioner_id: user.id,
+    conversation_id: convId,
+    audio_path: '', // Filled after upload
+    status: 'recording'
+  }).select().single();
+
+  // 3. Insert recording_upload message
+  await addMessage(convId, {
+    participant_type: 'practitioner',
+    message_type: 'recording_upload',
+    metadata: {
+      recording_id: recording.id,
+      status: 'recording',
+      duration_seconds: 0
+    }
+  });
+
+  // 4. Start actual recording...
+  return { conversationId: convId, recordingId: recording.id };
+}
+```
+
+### Integration with process-recording Edge Function
+
+After processing completes, add messages to conversation:
+
+```typescript
+// In process-recording edge function
+async function addProcessingMessages(
+  conversationId: string,
+  recordingId: string,
+  transcriptId: string,
+  results: {
+    enhanced_text: string;
+    raw_text: string;
+    summary: string;
+    suggestions: Suggestion[];
+    confidence: number;
+  }
+) {
+  const messages = [];
+
+  // 1. Transcription result
+  messages.push({
+    conversation_id: conversationId,
+    participant_type: 'transcription_ai',
+    message_type: 'transcription_result',
+    content: results.enhanced_text,
+    metadata: {
+      recording_id: recordingId,
+      transcript_id: transcriptId,
+      raw_text: results.raw_text,
+      word_count: results.enhanced_text.split(/\s+/).length,
+      confidence: results.confidence
+    }
+  });
+
+  // 2. Suggestions (if any)
+  if (results.suggestions.length > 0) {
+    messages.push({
+      conversation_id: conversationId,
+      participant_type: 'suggestions_ai',
+      message_type: 'suggestion',
+      content: 'I noticed some elements that may need attention:',
+      metadata: {
+        recording_id: recordingId,
+        suggestions: results.suggestions.map(s => ({
+          ...s,
+          id: crypto.randomUUID(),
+          status: 'pending'
+        }))
+      }
+    });
+  }
+
+  // 3. Summary
+  messages.push({
+    conversation_id: conversationId,
+    participant_type: 'summary_ai',
+    message_type: 'summary',
+    content: results.summary,
+    metadata: { recording_id: recordingId }
+  });
+
+  // Insert all messages
+  await supabase.from('conversation_messages').insert(messages);
+
+  // Update conversation title if this is the first recording
+  const { data: conv } = await supabase
+    .from('conversations')
+    .select('title')
+    .eq('id', conversationId)
+    .single();
+
+  if (!conv.title) {
+    await supabase
+      .from('conversations')
+      .update({ title: results.summary })
+      .eq('id', conversationId);
+  }
+
+  // Update recording status
+  await supabase
+    .from('recordings')
+    .update({ status: 'completed' })
+    .eq('id', recordingId);
+}
+```
+
+### Export Functionality
+
+Compile final transcript from all recordings in conversation:
+
+```typescript
+async function exportTranscript(conversationId: string): Promise<string> {
+  // Get all transcription results and user edits, ordered by creation
+  const { data: messages } = await supabase
+    .from('conversation_messages')
+    .select('*')
+    .eq('conversation_id', conversationId)
+    .in('message_type', ['transcription_result', 'user_edit'])
+    .order('created_at', { ascending: true });
+
+  // Group by recording_id, take latest version of each
+  const transcriptsByRecording = new Map<string, string>();
+
+  for (const msg of messages) {
+    const recordingId = msg.metadata.recording_id;
+    // user_edit overwrites transcription_result for same recording
+    transcriptsByRecording.set(recordingId, msg.content);
+  }
+
+  // Combine all transcripts
+  return Array.from(transcriptsByRecording.values()).join('\n\n---\n\n');
+}
+```
+
+### UI Components
+
+#### Shared Components (both platforms)
+
+| Component | Description |
+|-----------|-------------|
+| `ConversationList` | List of conversations with title, preview, timestamp |
+| `ConversationView` | Scrollable message list with input area |
+| `MessageBubble` | Renders message based on participant/type |
+| `RecordingStatus` | Shows recording/upload/processing state |
+| `SuggestionCard` | Expandable suggestion with accept/dismiss |
+| `TranscriptBlock` | Expandable transcript with edit button |
+
+#### Message Bubble Styling
+
+| Participant | Alignment | Background | Border |
+|-------------|-----------|------------|--------|
+| `practitioner` | Right | Primary color | None |
+| `transcription_ai` | Left | Muted background | Subtle |
+| `suggestions_ai` | Left | Warning/yellow tint | Subtle |
+| `summary_ai` | Left | Info/blue tint | Subtle |
+| `system` | Center | Transparent | None |
+
+---
+
 ## System Components
 
 ### 1. Mobile App (Expo)
@@ -78,11 +611,11 @@ A mobile-first medical transcription system that allows practitioners to dictate
 
 **Pages:**
 
-- `/login` - Email OTP + QR code display
-- `/dashboard` - Recent transcripts with summaries
-- `/dashboard/transcript/[id]` - View/edit transcript
-- `/dashboard/settings` - Preferences
-- `/dashboard/credits` - Buy credits (Stripe Checkout redirect)
+- `/auth` - Email OTP + QR code display
+- `/hello` - New conversation prompt (main entry after login)
+- `/c/[id]` - View/edit conversation with messages
+- `/settings` - Preferences
+- `/credits` - Buy credits (Stripe Checkout redirect)
 
 ### 3. Backend (Supabase)
 
@@ -104,6 +637,7 @@ create table practitioners (
 create table recordings (
   id uuid primary key default gen_random_uuid(),
   practitioner_id uuid references practitioners(id) not null,
+  conversation_id uuid references conversations(id),  -- Links to conversation thread
   audio_path text not null,
   duration_seconds integer,
   status text default 'pending', -- pending, pending_credits, processing, completed, failed
@@ -160,6 +694,30 @@ create table credit_transactions (
 
 create index idx_credit_transactions_practitioner
   on credit_transactions(practitioner_id, created_at desc);
+
+-- Conversations (groups recordings and messages into threads)
+create table conversations (
+  id uuid primary key default gen_random_uuid(),
+  practitioner_id uuid references practitioners(id) not null,
+  title text,  -- Auto-generated from first transcript summary
+  is_archived boolean default false,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- Conversation messages (all entries in a conversation thread)
+create table conversation_messages (
+  id uuid primary key default gen_random_uuid(),
+  conversation_id uuid references conversations(id) on delete cascade not null,
+  participant_type text not null,  -- practitioner, transcription_ai, suggestions_ai, summary_ai, system
+  message_type text not null,      -- recording_upload, transcription_result, suggestion, summary, user_edit, etc.
+  content text,                    -- Primary text content
+  metadata jsonb default '{}',     -- Type-specific data (recording_id, suggestion details, etc.)
+  created_at timestamptz default now()
+);
+
+create index idx_conversations_practitioner on conversations(practitioner_id, created_at desc);
+create index idx_conversation_messages_conversation on conversation_messages(conversation_id, created_at);
 ```
 
 **Edge Functions:**
@@ -870,6 +1428,24 @@ mabel/
 - [x] Make branded auth UI for web
 - [x] make branded auth UI for mobile
 - [x] transactional email styling
+
+### Phase 1.5: Conversations
+
+- [ ] Database: Add conversations and conversation_messages tables
+- [ ] Database: Add conversation_id to recordings table
+- [ ] Database: RLS policies for conversation access
+- [ ] Types: Add conversation types to @project/core
+- [ ] Hooks: Add useConversation hook to @project/hooks
+- [ ] Web: Rename (dashboard) to (app) route group
+- [ ] Web: Add side menu component with conversation history
+- [ ] Web: /hello page - new conversation prompt
+- [ ] Web: /c/[id] page - conversation view with messages
+- [ ] Mobile: Drawer layout for conversation history
+- [ ] Mobile: Conversation view with message list
+- [ ] Mobile: Recording controls integration
+- [ ] Backend: Update process-recording to add conversation messages
+- [ ] Realtime: Subscribe to conversation messages for live updates
+- [ ] Export: Add transcript export/copy functionality
 
 ### Phase 2: Recording & Upload
 
