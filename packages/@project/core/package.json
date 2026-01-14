@@ -15,6 +15,11 @@
       "import": "./dist/auth/index.mjs",
       "require": "./dist/auth/index.js",
       "types": "./dist/auth/index.d.ts"
+    },
+    "./theme": {
+      "import": "./dist/theme/index.mjs",
+      "require": "./dist/theme/index.js",
+      "types": "./dist/theme/index.d.ts"
     }
   },
   "scripts": {

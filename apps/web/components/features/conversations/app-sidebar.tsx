@@ -182,7 +182,7 @@ function ExpandedSidebarContent({
           onClick={onNewChat}
           className="flex items-center gap-3 rounded-md px-2 py-2 text-sm hover:bg-muted/50 transition-colors"
         >
-          <MessageCirclePlus className="h-5 w-5 text-orange-500" />
+          <MessageCirclePlus className="h-5 w-5 text-accent" />
           <span>New task</span>
         </Link>
       </div>
@@ -254,7 +254,7 @@ function CollapsedSidebarContent({
             <Button
               variant="ghost"
               size="icon"
-              className="text-orange-500 hover:text-orange-600"
+              className="text-accent hover:text-orange-600"
               asChild
             >
               <Link href="/hello">
@@ -335,7 +335,7 @@ function MobileSheetContent({
           onClick={onClose}
           className="flex items-center gap-3 rounded-md px-2 py-2 text-sm hover:bg-muted/50 transition-colors"
         >
-          <MessageCirclePlus className="h-5 w-5 text-orange-500" />
+          <MessageCirclePlus className="h-5 w-5 text-accent" />
           <span>New task</span>
         </Link>
       </div>
