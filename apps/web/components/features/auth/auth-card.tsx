@@ -29,7 +29,6 @@ export function AuthCard() {
     },
     onSuccess: () => {
       router.push("/dashboard");
-      router.refresh();
     },
     onError: (message) =>
       toast({

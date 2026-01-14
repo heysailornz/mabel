@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { RealtimeChannel } from "@supabase/supabase-js";
@@ -15,6 +15,12 @@ export function useSidebarNotifications(): UseSidebarNotificationsReturn {
   const [notifiedIds, setNotifiedIds] = useState<Set<string>>(new Set());
   const [isSubscribed, setIsSubscribed] = useState(false);
   const pathname = usePathname();
+  const pathnameRef = useRef(pathname);
+
+  // Keep pathname ref in sync for use in callbacks
+  useEffect(() => {
+    pathnameRef.current = pathname;
+  }, [pathname]);
 
   // Clear notification for a conversation
   const clearNotification = useCallback((conversationId: string) => {
@@ -67,7 +73,7 @@ export function useSidebarNotifications(): UseSidebarNotificationsReturn {
             if (!isActive) return;
             const newConversation = payload.new as { id: string };
             // Don't notify if we're currently viewing this conversation
-            const match = window.location.pathname.match(/^\/c\/([^/]+)/);
+            const match = pathnameRef.current.match(/^\/c\/([^/]+)/);
             if (match && match[1] === newConversation.id) return;
 
             setNotifiedIds((prev) => new Set(prev).add(newConversation.id));
@@ -96,7 +102,7 @@ export function useSidebarNotifications(): UseSidebarNotificationsReturn {
             if (newMessage.participant_type === "practitioner") return;
 
             // Don't notify if we're currently viewing this conversation
-            const match = window.location.pathname.match(/^\/c\/([^/]+)/);
+            const match = pathnameRef.current.match(/^\/c\/([^/]+)/);
             if (match && match[1] === newMessage.conversation_id) return;
 
             setNotifiedIds((prev) => new Set(prev).add(newMessage.conversation_id));

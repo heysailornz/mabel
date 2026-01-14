@@ -26,7 +26,7 @@ export default async function AppLayout({
     .from("practitioners")
     .select("full_name")
     .eq("id", user.id)
-    .single() as { data: { full_name: string | null } | null };
+    .single();
 
   // Get conversations for sidebar
   const conversations = await getConversations();
