@@ -2,49 +2,51 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Theme colors matching web app (oklch-based sage/olive palette) */
+/* Default shadcn theme (zinc-based neutral palette) */
 
 :root {
-  --background: #f0f2ec;
-  --foreground: #272d21;
+  --background: #ffffff;
+  --foreground: #09090b;
   --card: #ffffff;
-  --card-foreground: #272d21;
+  --card-foreground: #09090b;
   --popover: #ffffff;
-  --popover-foreground: #272d21;
-  --primary: #3d4435;
-  --primary-foreground: #f0f2ec;
-  --secondary: #e3e8dc;
-  --secondary-foreground: #3d4435;
-  --muted: #e3e8dc;
-  --muted-foreground: #6b7a5d;
-  --accent: #e3e8dc;
-  --accent-foreground: #3d4435;
-  --destructive: #dc2626;
-  --border: #d4dac8;
-  --input: #a8b396;
-  --placeholder: #6b7a5d;
-  --ring: #8a9a78;
-  --radius: 0.625rem;
+  --popover-foreground: #09090b;
+  --primary: #18181b;
+  --primary-foreground: #fafafa;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --accent: #f4f4f5;
+  --accent-foreground: #18181b;
+  --destructive: #ef4444;
+  --destructive-foreground: #fafafa;
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --placeholder: #71717a;
+  --ring: #a1a1aa;
+  --radius: 0.5rem;
 }
 
 .dark {
-  --background: #1a1e15;
-  --foreground: #f0f2ec;
-  --card: #272d21;
-  --card-foreground: #f0f2ec;
-  --popover: #272d21;
-  --popover-foreground: #f0f2ec;
-  --primary: #e3e8dc;
-  --primary-foreground: #272d21;
-  --secondary: #3d4435;
-  --secondary-foreground: #e3e8dc;
-  --muted: #3d4435;
-  --muted-foreground: #7d8d6d;
-  --accent: #3d4435;
-  --accent-foreground: #e3e8dc;
-  --destructive: #ef4444;
-  --border: #3d4435;
-  --input: #505946;
-  --placeholder: #7d8d6d;
-  --ring: #6b7a5d;
+  --background: #09090b;
+  --foreground: #fafafa;
+  --card: #09090b;
+  --card-foreground: #fafafa;
+  --popover: #09090b;
+  --popover-foreground: #fafafa;
+  --primary: #fafafa;
+  --primary-foreground: #18181b;
+  --secondary: #27272a;
+  --secondary-foreground: #fafafa;
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
+  --accent: #27272a;
+  --accent-foreground: #fafafa;
+  --destructive: #7f1d1d;
+  --destructive-foreground: #fafafa;
+  --border: #27272a;
+  --input: #27272a;
+  --placeholder: #a1a1aa;
+  --ring: #d4d4d8;
 }
