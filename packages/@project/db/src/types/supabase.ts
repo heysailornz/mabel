@@ -34,6 +34,79 @@ export type Database = {
   }
   public: {
     Tables: {
+      conversation_messages: {
+        Row: {
+          content: string | null
+          conversation_id: string
+          created_at: string
+          id: string
+          message_type: string
+          metadata: Json
+          participant_type: string
+        }
+        Insert: {
+          content?: string | null
+          conversation_id: string
+          created_at?: string
+          id?: string
+          message_type: string
+          metadata?: Json
+          participant_type: string
+        }
+        Update: {
+          content?: string | null
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          message_type?: string
+          metadata?: Json
+          participant_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          created_at: string
+          id: string
+          is_archived: boolean
+          practitioner_id: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          practitioner_id: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          practitioner_id?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_practitioner_id_fkey"
+            columns: ["practitioner_id"]
+            isOneToOne: false
+            referencedRelation: "practitioners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       credit_transactions: {
         Row: {
           amount: number
@@ -124,6 +197,7 @@ export type Database = {
       recordings: {
         Row: {
           audio_path: string
+          conversation_id: string | null
           created_at: string
           duration_seconds: number | null
           id: string
@@ -132,6 +206,7 @@ export type Database = {
         }
         Insert: {
           audio_path: string
+          conversation_id?: string | null
           created_at?: string
           duration_seconds?: number | null
           id?: string
@@ -140,6 +215,7 @@ export type Database = {
         }
         Update: {
           audio_path?: string
+          conversation_id?: string | null
           created_at?: string
           duration_seconds?: number | null
           id?: string
@@ -147,6 +223,13 @@ export type Database = {
           status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "recordings_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "recordings_practitioner_id_fkey"
             columns: ["practitioner_id"]
@@ -301,6 +384,9 @@ export type Database = {
     CompositeTypes: {
       [_ in never]: never
     }
+  }
+  __InternalSupabase: {
+    PostgrestVersion: "12"
   }
 }
 

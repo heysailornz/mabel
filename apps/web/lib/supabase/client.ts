@@ -1,1 +1,8 @@
-export { createClient } from "@project/db/web/client";
+import { createBrowserClient } from "@supabase/ssr";
+import type { Database } from "@project/db/types";
+
+export const createClient = () =>
+  createBrowserClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );

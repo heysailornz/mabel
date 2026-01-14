@@ -161,6 +161,66 @@ export const createClient = async () => {
 };
 ```
 
+### 4. Maintaining Database Types
+
+Database types are generated from your Supabase schema and stored in `packages/@project/db/src/types/supabase.ts`. Apps import types from `@project/db/types`.
+
+**CRITICAL: After regenerating types, you MUST add the `__InternalSupabase` property**
+
+The Supabase SDK requires this property for proper type inference. The `supabase gen types` command does NOT include it, so you must add it manually.
+
+**Complete workflow after ANY schema change:**
+
+```bash
+# 1. Generate types
+cd packages/@project/db
+pnpm supabase gen types --local > src/types/supabase.ts
+
+# 2. Add __InternalSupabase property to the Database type (see below)
+
+# 3. Rebuild packages
+cd ../..
+pnpm build
+```
+
+**Where to add `__InternalSupabase`:**
+
+Find the end of the Database type definition (after the `public:` schema block) and add:
+
+```typescript
+export type Database = {
+  graphql_public: { ... }
+  public: {
+    Tables: { ... }
+    Views: { ... }
+    Functions: { ... }
+    Enums: { ... }
+    CompositeTypes: { ... }
+  }
+  // ADD THIS after the public schema:
+  __InternalSupabase: {
+    PostgrestVersion: "12"
+  }
+}
+```
+
+**Why this is needed:**
+- The Supabase SDK v2.x uses `Exclude<keyof Database, "__InternalSupabase">` in its type definitions
+- Without this property, the schema types resolve to `never` causing all table operations to fail type checking
+- This is a known issue with the generated types from `supabase gen types`
+
+**Using the typed Supabase client:**
+
+The `createClient()` functions in `lib/supabase/server.ts` and `lib/supabase/client.ts` import `Database` from `@project/db/types`. This provides:
+- Table name autocompletion: `supabase.from("conversations")`
+- Column name validation: `.select("id, title, created_at")`
+- Inferred return types: `data` will have the correct shape
+
+**NEVER use `as any` to bypass type errors.** If you see type errors like `'never'` for table names:
+1. Check that `__InternalSupabase` property exists in the Database type
+2. Rebuild `@project/db`: `cd packages/@project/db && pnpm build`
+3. Restart your TypeScript server in your IDE
+
 ### Supabase Migration-First Development
 
 When working with Supabase databases, **ALWAYS** use migrations for ANY schema changes:
@@ -367,6 +427,10 @@ export async function signOut()
 
 /* No more @tailwind directives or @layer needed */
 ```
+
+### Typography
+
+Use `text-base` (16px) as the standard text size throughout the application. Only use smaller sizes (`text-sm`, `text-xs`) for secondary UI elements like labels, captions, or metadata.
 
 ### Component Setup
 
@@ -699,6 +763,10 @@ async function PostsList() {
 ```
 
 ## 🔧 Development Workflow
+
+### Live Dev Preview
+
+Use http://localhost:3000 to review live dev output for the web app. This is useful for visually verifying UI changes, testing responsive behavior, and debugging.
 
 ### Essential Scripts
 

@@ -2,6 +2,9 @@ import { createServerClient as createSSRServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { Database } from "../types/supabase";
 
+// Re-export Database type for consumers
+export type { Database };
+
 interface CookieToSet {
   name: string;
   value: string;

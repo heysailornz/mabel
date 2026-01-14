@@ -10,7 +10,7 @@ export default defineConfig({
     "src/mobile/index.ts",
   ],
   format: ["cjs", "esm"],
-  dts: true,
+  dts: false, // Use tsc for declarations to avoid chunking issues
   clean: true,
   external: [
     "next",

@@ -18,20 +18,20 @@ This checklist tracks implementation progress. Each task references the relevant
 
 | Status | Task | Specs |
 |--------|------|-------|
-| [ ] | Database: Add conversations and conversation_messages tables | [database.md](./database.md), [conversations.md](./conversations.md) |
-| [ ] | Database: Add conversation_id to recordings table | [database.md](./database.md) |
-| [ ] | Database: RLS policies for conversation access | [database.md](./database.md), [security.md](./security.md) |
-| [ ] | Types: Add conversation types to @project/core | [conversations.md](./conversations.md) |
+| [x] | Database: Add conversations and conversation_messages tables | [database.md](./database.md), [conversations.md](./conversations.md) |
+| [x] | Database: Add conversation_id to recordings table | [database.md](./database.md) |
+| [x] | Database: RLS policies for conversation access | [database.md](./database.md), [security.md](./security.md) |
+| [x] | Types: Add conversation types to @project/core | [conversations.md](./conversations.md) |
 | [ ] | Hooks: Add useConversation hook to @project/hooks | [conversations.md](./conversations.md) |
-| [ ] | Web: Rename (dashboard) to (app) route group | [conversations.md](./conversations.md) |
-| [ ] | Web: Add side menu component with conversation history | [conversations.md](./conversations.md) |
-| [ ] | Web: /hello page - new conversation prompt | [conversations.md](./conversations.md) |
-| [ ] | Web: /c/[id] page - conversation view with messages | [conversations.md](./conversations.md) |
+| [x] | Web: Rename (dashboard) to (app) route group | [conversations.md](./conversations.md) |
+| [x] | Web: Add side menu component with conversation history | [conversations.md](./conversations.md) |
+| [x] | Web: /hello page - new conversation prompt | [conversations.md](./conversations.md) |
+| [x] | Web: /c/[id] page - conversation view with messages | [conversations.md](./conversations.md) |
 | [ ] | Mobile: Drawer layout for conversation history | [conversations.md](./conversations.md) |
 | [ ] | Mobile: Conversation view with message list | [conversations.md](./conversations.md) |
 | [ ] | Mobile: Recording controls integration | [conversations.md](./conversations.md), [recording-upload.md](./recording-upload.md) |
 | [ ] | Backend: Update process-recording to add conversation messages | [transcription.md](./transcription.md), [conversations.md](./conversations.md) |
-| [ ] | Realtime: Subscribe to conversation messages for live updates | [conversations.md](./conversations.md) |
+| [x] | Realtime: Subscribe to conversation messages for live updates | [conversations.md](./conversations.md) |
 | [ ] | Export: Add transcript export/copy functionality | [conversations.md](./conversations.md) |
 
 ## Phase 2: Recording & Upload
