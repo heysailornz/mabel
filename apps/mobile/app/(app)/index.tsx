@@ -1,87 +1,46 @@
-import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { useAuth } from "@/contexts/auth-context";
+import { View } from "react-native";
+import { Text } from "@/components/ui/text";
+import { AppHeader } from "@/components/navigation/app-header";
+import { RecordingBar } from "@/components/conversation/recording-bar";
+import { getTimeBasedGreeting } from "@project/core";
 
-export default function HomeScreen() {
-  const { user, signOut } = useAuth();
-
-  const handleSignOut = async () => {
-    await signOut();
-  };
-
+function Disclaimer() {
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.welcomeText}>Welcome!</Text>
-        <Text style={styles.emailText}>{user?.email}</Text>
-
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Getting Started</Text>
-          <Text style={styles.cardDescription}>
-            Welcome to your app. Start building your features here.
-          </Text>
-        </View>
-
-        <TouchableOpacity onPress={handleSignOut} style={styles.signOutButton}>
-          <Text style={styles.signOutButtonText}>Sign Out</Text>
-        </TouchableOpacity>
-      </View>
+    <View className="px-8 pb-2">
+      <Text className="text-xs text-muted-foreground text-center leading-4">
+        Mabel can make mistakes. Always review content and use your own
+        judgement.
+      </Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f5f5f5",
-  },
-  content: {
-    flex: 1,
-    padding: 24,
-  },
-  welcomeText: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#000",
-    marginBottom: 4,
-  },
-  emailText: {
-    fontSize: 16,
-    color: "#666",
-    marginBottom: 24,
-  },
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  cardTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#000",
-    marginBottom: 8,
-  },
-  cardDescription: {
-    fontSize: 14,
-    color: "#666",
-    lineHeight: 20,
-  },
-  signOutButton: {
-    backgroundColor: "#dc2626",
-    padding: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: "auto",
-  },
-  signOutButtonText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 16,
-  },
-});
+export default function NewConversationScreen() {
+  const greeting = getTimeBasedGreeting();
+
+  const handleRecordPress = () => {
+    // TODO: Start recording and create conversation
+    console.log("Record pressed");
+  };
+
+  return (
+    <View className="flex-1 bg-background">
+      <AppHeader />
+
+      {/* Welcome content - centered */}
+      <View className="flex-1 justify-center items-center px-8">
+        <Text className="font-noto text-2xl text-foreground text-center mb-2">
+          {greeting}
+        </Text>
+        <Text className="font-noto text-lg text-foreground text-center leading-7">
+          Describe your consultation,{"\n"}and I'll start transcribing it{"\n"}
+          for you.
+        </Text>
+      </View>
+
+      {/* Bottom section */}
+      <RecordingBar onRecordPress={handleRecordPress} />
+      <Disclaimer />
+    </View>
+  );
+}

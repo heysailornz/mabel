@@ -82,6 +82,77 @@ function MyScreen() {
 
 NativeWind supports dark mode via the `.dark` class. Theme colors are defined in `global.css` with CSS variables for both light and dark variants.
 
+## Icons
+
+Use `lucide-react-native` for icons in the mobile app (matches `lucide-react` used in the web app). This ensures visual consistency across platforms.
+
+```tsx
+import { MessageCirclePlus, Menu, X } from "lucide-react-native";
+
+// Use with explicit size and color props
+<MessageCirclePlus size={24} color="#f97316" />
+```
+
+## Installing Expo Packages
+
+**CRITICAL**: Always use `npx expo install` instead of `pnpm add` for Expo-related packages. This ensures version compatibility with your Expo SDK version.
+
+```bash
+# Correct - uses Expo's version resolution
+cd apps/mobile
+npx expo install react-native-gesture-handler react-native-reanimated
+
+# Incorrect - may install incompatible versions
+pnpm add react-native-gesture-handler react-native-reanimated
+```
+
+Common packages that should use `npx expo install`:
+- `react-native-gesture-handler`
+- `react-native-reanimated`
+- `react-native-screens`
+- `react-native-safe-area-context`
+- `expo-*` packages
+- Any package with native dependencies
+
+After installing new native packages, restart the development server with cache cleared:
+```bash
+npx expo start --clear
+```
+
+## Drawer Navigation Setup
+
+The mobile app uses `@react-navigation/drawer` with expo-router. Required setup:
+
+1. Install dependencies:
+```bash
+cd apps/mobile
+npx expo install react-native-gesture-handler react-native-reanimated
+pnpm add @react-navigation/drawer
+```
+
+2. Ensure babel.config.js includes the Reanimated plugin (already configured):
+```js
+plugins: ["react-native-reanimated/plugin"]
+```
+
+3. Wrap your drawer layout with `GestureHandlerRootView`:
+```tsx
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { createDrawerNavigator } from "@react-navigation/drawer";
+
+const Drawer = createDrawerNavigator();
+
+export default function Layout() {
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Drawer.Navigator>
+        {/* screens */}
+      </Drawer.Navigator>
+    </GestureHandlerRootView>
+  );
+}
+```
+
 # Next.js 16.1 + Supabase + TypeScript Best Practices
 
 ## 🚀 Core Principles

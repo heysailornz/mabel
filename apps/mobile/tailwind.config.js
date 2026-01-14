@@ -8,7 +8,15 @@ module.exports = {
   theme: {
     extend: {
       fontSize: {
-        base: ["18px", { lineHeight: "24px" }],
+        // Mobile-optimized type scale (scaled up from Tailwind defaults)
+        xs: ["14px", { lineHeight: "18px" }],   // default: 12px
+        sm: ["16px", { lineHeight: "22px" }],   // default: 14px
+        base: ["18px", { lineHeight: "26px" }], // default: 16px
+        lg: ["20px", { lineHeight: "28px" }],   // default: 18px
+        xl: ["24px", { lineHeight: "32px" }],   // default: 20px
+        "2xl": ["28px", { lineHeight: "36px" }], // default: 24px
+        "3xl": ["34px", { lineHeight: "42px" }], // default: 30px
+        "4xl": ["40px", { lineHeight: "48px" }], // default: 36px
       },
       fontFamily: {
         noto: ["NotoSerif"],

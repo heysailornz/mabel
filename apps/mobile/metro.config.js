@@ -18,8 +18,8 @@ config.resolver.nodeModulesPaths = [
   path.resolve(monorepoRoot, "node_modules"),
 ];
 
-// 3. Force Metro to resolve (sub)dependencies only from the `nodeModulesPaths`
-config.resolver.disableHierarchicalLookup = true;
+// 3. Allow following symlinks for pnpm
+config.resolver.unstable_enableSymlinks = true;
 
 // 4. Resolve @project/* workspace packages to source for hot reload
 // This maps package imports to their TypeScript source instead of dist/
