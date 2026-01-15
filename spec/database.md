@@ -2,6 +2,15 @@
 
 Complete PostgreSQL schema for Supabase backend.
 
+## Architecture Note: Skills and Future-Proofing
+
+The database schema is designed to support multiple "skills" (transcription, image analysis, etc.) through a unified input/artifact model. See [skills.md](./skills.md) for the skill architecture.
+
+**Key abstractions:**
+- `user_inputs` - Tracks all user inputs (audio, text, images, documents)
+- `artifacts` - Unified output from any skill (replaces transcript-specific model)
+- Skills are defined in code initially, not database (may add `skills` table later)
+
 ## Tables
 
 ### practitioners
@@ -22,7 +31,7 @@ create table practitioners (
 
 ### recordings
 
-Audio recordings with processing status.
+Audio file storage and upload tracking. Links to `user_inputs` for processing.
 
 ```sql
 create table recordings (
@@ -31,28 +40,150 @@ create table recordings (
   conversation_id uuid references conversations(id),  -- Links to conversation thread
   audio_path text not null,
   duration_seconds integer,
+  file_size_bytes bigint,
+  mime_type text default 'audio/aac',
   status text default 'pending', -- pending, pending_credits, processing, completed, failed
   created_at timestamptz default now()
 );
 ```
 
-### transcripts
+### user_inputs
 
-Transcription results with versions.
+Unified tracking for all user inputs (audio, text, image, document). This is the source table that feeds into skill processing.
 
 ```sql
-create table transcripts (
+create table user_inputs (
   id uuid primary key default gen_random_uuid(),
-  recording_id uuid references recordings(id) not null,
-  raw_text text,              -- Original from transcription API
-  enhanced_text text,         -- After vocabulary corrections
-  edited_text text,           -- After practitioner corrections
-  summary text,               -- One-sentence summary for list display
-  suggestions jsonb,          -- AI-generated suggestions
+  practitioner_id uuid references practitioners(id) not null,
+  conversation_id uuid references conversations(id) not null,
+
+  -- Input type and source
+  input_type text not null,                  -- 'audio', 'text', 'image', 'document'
+  recording_id uuid references recordings(id),  -- For audio inputs
+  storage_path text,                         -- For image/document inputs
+  raw_content text,                          -- For text inputs (or extracted text)
+
+  -- Classification result (from unified classifier)
+  classification jsonb,
+  /*
+    {
+      "skillId": "transcription",
+      "intent": "new_artifact" | "enrich_existing" | "instruction" | "question",
+      "confidence": 0.95,
+      "reasoning": "...",
+      "targetArtifactId": "uuid or null",
+      "suggestedAction": "add_content"
+    }
+  */
+
+  -- Processing state
+  status text default 'received' not null,   -- received, classifying, processing, completed, failed
+  error_message text,
+
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
+
+create index idx_user_inputs_conversation on user_inputs(conversation_id, created_at desc);
+create index idx_user_inputs_practitioner on user_inputs(practitioner_id, created_at desc);
+create index idx_user_inputs_type on user_inputs(input_type);
 ```
+
+### artifacts
+
+Unified output from any skill. Replaces the transcript-specific model to support future skills (X-ray analysis, VBG, etc.).
+
+```sql
+create table artifacts (
+  id uuid primary key default gen_random_uuid(),
+  practitioner_id uuid references practitioners(id) not null,
+  conversation_id uuid references conversations(id) not null,
+
+  -- Source tracking
+  skill_id text not null,                    -- 'transcription', 'xray_analysis', etc.
+  source_input_id uuid references user_inputs(id) not null,
+
+  -- Artifact type and content
+  artifact_type text not null,               -- 'transcript', 'xray_analysis', 'vbg_analysis'
+  content jsonb not null,                    -- Skill-specific structured content
+  raw_content text,                          -- Original unprocessed content (if applicable)
+
+  -- Display
+  summary text,                              -- One-sentence summary for list display
+  title text,                                -- Optional title
+
+  -- AI assistance
+  suggestions jsonb default '[]',            -- AI-generated suggestions
+
+  -- Cross-artifact references
+  references jsonb default '[]',             -- Links to related artifacts
+  /*
+    [
+      {
+        "artifactId": "uuid",
+        "artifactType": "xray_analysis",
+        "referenceType": "supports",
+        "addedAt": "2024-01-15T10:00:00Z"
+      }
+    ]
+  */
+
+  -- State
+  status text default 'processing' not null, -- processing, ready, failed
+  version integer default 1 not null,
+  is_edited boolean default false,
+
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create index idx_artifacts_conversation on artifacts(conversation_id, created_at desc);
+create index idx_artifacts_skill on artifacts(skill_id);
+create index idx_artifacts_type on artifacts(artifact_type);
+create index idx_artifacts_source on artifacts(source_input_id);
+```
+
+**Transcript content schema (artifact_type = 'transcript'):**
+```json
+{
+  "text": "Original text...",
+  "enhancedText": "After vocabulary corrections...",
+  "editedText": "After user edits (optional)...",
+  "sourceType": "audio | text",
+  "durationSeconds": 180,
+  "wordCount": 450,
+  "confidence": 0.94,
+  "sections": {
+    "chiefComplaint": "...",
+    "historyOfPresentIllness": "...",
+    "examination": "...",
+    "assessment": "...",
+    "plan": "..."
+  }
+}
+```
+
+**X-ray analysis content schema (artifact_type = 'xray_analysis'):**
+```json
+{
+  "imageUrl": "storage://...",
+  "viewType": "PA | lateral | AP",
+  "findings": [
+    {
+      "region": "right_lower_lobe",
+      "finding": "consolidation",
+      "severity": "moderate",
+      "confidence": 0.87,
+      "description": "..."
+    }
+  ],
+  "impression": "...",
+  "recommendations": ["..."],
+  "imageQuality": "good | adequate | limited"
+}
+```
+
+See [artifacts.md](./artifacts.md) for complete content schemas for all artifact types.
 
 ### vocabulary
 
@@ -95,16 +226,19 @@ create table credit_transactions (
   practitioner_id uuid references practitioners(id) not null,
   amount integer not null,              -- +10 for purchase, -1 for use, +1 for refund
   balance_after integer not null,       -- Running balance after transaction
-  type text not null,                   -- 'signup_bonus', 'purchase', 'transcription', 'refund'
+  type text not null,                   -- 'signup_bonus', 'purchase', 'skill_usage', 'refund'
+  skill_id text,                        -- Which skill used credits (for skill_usage type)
   stripe_checkout_session_id text,      -- For purchases
   stripe_payment_intent_id text,        -- For purchases
-  recording_id uuid references recordings(id),  -- For transcription/refund
+  user_input_id uuid references user_inputs(id),  -- For skill_usage/refund
+  artifact_id uuid references artifacts(id),      -- Resulting artifact (if any)
   notes text,
   created_at timestamptz default now()
 );
 
 create index idx_credit_transactions_practitioner
   on credit_transactions(practitioner_id, created_at desc);
+create index idx_credit_transactions_skill on credit_transactions(skill_id);
 ```
 
 ### conversations
@@ -174,12 +308,11 @@ CREATE POLICY "practitioners_own_data" ON practitioners
 CREATE POLICY "recordings_own_data" ON recordings
   FOR ALL USING ((select auth.uid()) = practitioner_id);
 
-CREATE POLICY "transcripts_via_recordings" ON transcripts
-  FOR ALL USING (
-    recording_id IN (
-      SELECT id FROM recordings WHERE practitioner_id = (select auth.uid())
-    )
-  );
+CREATE POLICY "user_inputs_own_data" ON user_inputs
+  FOR ALL USING ((select auth.uid()) = practitioner_id);
+
+CREATE POLICY "artifacts_own_data" ON artifacts
+  FOR ALL USING ((select auth.uid()) = practitioner_id);
 
 CREATE POLICY "vocabulary_own_data" ON vocabulary
   FOR ALL USING ((select auth.uid()) = practitioner_id);
@@ -221,7 +354,8 @@ create or replace function add_credits(
   p_amount integer,
   p_type text,
   p_stripe_session_id text default null,
-  p_recording_id uuid default null
+  p_user_input_id uuid default null,
+  p_skill_id text default null
 ) returns integer as $$
 declare
   new_balance integer;
@@ -233,27 +367,29 @@ begin
 
   insert into credit_transactions (
     practitioner_id, amount, balance_after, type,
-    stripe_checkout_session_id, recording_id
+    stripe_checkout_session_id, user_input_id, skill_id
   ) values (
     p_practitioner_id, p_amount, new_balance, p_type,
-    p_stripe_session_id, p_recording_id
+    p_stripe_session_id, p_user_input_id, p_skill_id
   );
 
   return new_balance;
 end;
 $$ language plpgsql security definer set search_path = '';
 
--- Use credit (returns true if successful)
-create or replace function use_credit(
+-- Use credits for skill processing (supports variable credit costs)
+create or replace function use_skill_credits(
   p_practitioner_id uuid,
-  p_recording_id uuid
+  p_user_input_id uuid,
+  p_skill_id text,
+  p_credit_cost integer default 1
 ) returns boolean as $$
 declare
   current_credits integer;
 begin
   update practitioners
-  set credits = credits - 1
-  where id = p_practitioner_id and credits > 0
+  set credits = credits - p_credit_cost
+  where id = p_practitioner_id and credits >= p_credit_cost
   returning credits into current_credits;
 
   if current_credits is null then
@@ -261,23 +397,25 @@ begin
   end if;
 
   insert into credit_transactions (
-    practitioner_id, amount, balance_after, type, recording_id
+    practitioner_id, amount, balance_after, type, user_input_id, skill_id
   ) values (
-    p_practitioner_id, -1, current_credits, 'transcription', p_recording_id
+    p_practitioner_id, -p_credit_cost, current_credits, 'skill_usage', p_user_input_id, p_skill_id
   );
 
   return true;
 end;
 $$ language plpgsql security definer set search_path = '';
 
--- Refund credit on failed transcription
-create or replace function refund_credit(
+-- Refund credits on failed processing
+create or replace function refund_skill_credits(
   p_practitioner_id uuid,
-  p_recording_id uuid
+  p_user_input_id uuid,
+  p_skill_id text,
+  p_credit_amount integer default 1
 ) returns integer as $$
 begin
   return add_credits(
-    p_practitioner_id, 1, 'refund', null, p_recording_id
+    p_practitioner_id, p_credit_amount, 'refund', null, p_user_input_id, p_skill_id
   );
 end;
 $$ language plpgsql security definer set search_path = '';
@@ -299,8 +437,11 @@ $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
 ## Storage Buckets
 
 ```sql
--- Recordings bucket (private, RLS protected)
+-- Recordings bucket for audio files (private, RLS protected)
 insert into storage.buckets (id, name, public) values ('recordings', 'recordings', false);
+
+-- User uploads bucket for images and documents (private, RLS protected)
+insert into storage.buckets (id, name, public) values ('uploads', 'uploads', false);
 
 -- RLS for recordings bucket
 CREATE POLICY "recordings_upload" ON storage.objects
@@ -312,6 +453,19 @@ CREATE POLICY "recordings_upload" ON storage.objects
 CREATE POLICY "recordings_read" ON storage.objects
   FOR SELECT USING (
     bucket_id = 'recordings' AND
+    (select auth.uid())::text = (storage.foldername(name))[1]
+  );
+
+-- RLS for uploads bucket (images, documents)
+CREATE POLICY "uploads_insert" ON storage.objects
+  FOR INSERT WITH CHECK (
+    bucket_id = 'uploads' AND
+    (select auth.uid())::text = (storage.foldername(name))[1]
+  );
+
+CREATE POLICY "uploads_read" ON storage.objects
+  FOR SELECT USING (
+    bucket_id = 'uploads' AND
     (select auth.uid())::text = (storage.foldername(name))[1]
   );
 ```
@@ -333,8 +487,12 @@ create trigger practitioners_updated_at
   before update on practitioners
   for each row execute function update_updated_at();
 
-create trigger transcripts_updated_at
-  before update on transcripts
+create trigger user_inputs_updated_at
+  before update on user_inputs
+  for each row execute function update_updated_at();
+
+create trigger artifacts_updated_at
+  before update on artifacts
   for each row execute function update_updated_at();
 
 create trigger conversations_updated_at
@@ -344,6 +502,9 @@ create trigger conversations_updated_at
 
 ## Related Specs
 
+- [skills.md](./skills.md) - Skill architecture and definitions
+- [artifacts.md](./artifacts.md) - Unified artifact model
+- [text-entry.md](./text-entry.md) - Text entry classification and processing
 - [payments.md](./payments.md) - Credit system details
 - [security.md](./security.md) - RLS best practices
 - [conversations.md](./conversations.md) - Message types and schemas

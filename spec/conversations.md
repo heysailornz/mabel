@@ -1,16 +1,29 @@
 # Conversations
 
-Conversations are the primary interface for interacting with the transcription system. Each conversation is a chat-style thread containing practitioner recordings, AI responses (transcriptions, suggestions, summaries), and user actions (edits, accepted suggestions).
+Conversations are the primary interface for interacting with the transcription system. Each conversation is a chat-style thread containing practitioner inputs (recordings, text, images), AI responses (artifacts, suggestions, summaries), and user actions (edits, accepted suggestions).
+
+## Architecture Note: Skills and Artifacts
+
+The conversation system is designed to support multiple "skills" that process different input types. See [skills.md](./skills.md) and [artifacts.md](./artifacts.md) for the extensible architecture.
+
+**Key concepts:**
+- **User Input** - Any input from the practitioner (audio, text, image, document)
+- **Skill** - A processing capability (transcription, X-ray analysis, VBG analysis, etc.)
+- **Artifact** - The output from a skill (transcript, analysis report, etc.)
+
+The message types below support both current functionality (transcription, text entry) and future skills (image analysis, etc.).
 
 ## Key Decisions
 
 | Aspect | Decision |
 |--------|----------|
-| Recordings per conversation | 1:many (multiple recordings allowed per conversation) |
-| AI participant types | Separate: `transcription_ai`, `suggestions_ai`, `summary_ai` |
-| User actions tracked | Edits and accepted suggestions appear as messages |
+| Input types | Audio, text, images, documents (extensible via skills) |
+| Inputs per conversation | 1:many (multiple inputs allowed per conversation) |
+| AI participant types | `transcription_ai`, `suggestions_ai`, `summary_ai`, `assistant_ai`, `skill_ai` |
+| User actions tracked | Edits, accepted suggestions, and all inputs appear as messages |
+| Input classification | AI determines skill + intent (new artifact, enrich existing, instruction, question) |
 | Recording platform | Mobile preferred; web allows recording if microphone available |
-| Conversation titles | Auto-generated from first transcript summary (not user-editable) |
+| Conversation titles | Auto-generated from first artifact summary (not user-editable) |
 | Conversation lifecycle | `active` or `archived` only (no "completed" state) |
 
 ## Visual Mockups
@@ -37,6 +50,8 @@ Reference mockups are available in `spec/mockups/`. These illustrate the intende
 | [Conversation Action Entry with artifact](mockups/mobile/Conversation%20Action%20Entry%20with%20artifact.png) | Artifact card with Review and Review on web actions |
 
 ## Conversation Flow
+
+### Audio Recording Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -66,6 +81,45 @@ Reference mockups are available in `spec/mockups/`. These illustrate the intende
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
+### Text Entry Flow
+
+See [text-entry.md](./text-entry.md) for full details on classification and processing.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 1. SUBMIT TEXT                                                              │
+│    Practitioner types and submits → conversation created (if new)           │
+│    → text_entry message inserted (status: sent)                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 2. CLASSIFY                                                                 │
+│    AI classifier determines intent → text_entry updated (status: classifying)│
+│    → Classification result: consultation | instruction | fragment | question │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 3A. CONSULTATION (new clinical content)                                     │
+│    → Enhancement (vocabulary) → summary → suggestions                       │
+│    → text_processed message + artifact card                                │
+│    → summary message + conversation.title updated (if first)               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 3B. FRAGMENT (additional info for existing transcript)                      │
+│    → Enhancement → merge into latest transcript                             │
+│    → Regenerate suggestions if needed                                       │
+│    → fragment_merged message                                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 3C. INSTRUCTION (command to modify documentation)                           │
+│    → Load context (transcripts, suggestions, edit history)                  │
+│    → Parse and execute action (add, edit, accept suggestion, etc.)          │
+│    → instruction_response message                                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 3D. QUESTION (query about documentation)                                    │
+│    → Load context → Generate answer                                         │
+│    → instruction_response message with answer                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 4. COMPLETE                                                                 │
+│    → text_entry updated (status: completed)                                │
+│    → Two blue ticks displayed                                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
 ## Participant Types
 
 | Type | Description | Avatar/Icon |
@@ -73,7 +127,9 @@ Reference mockups are available in `spec/mockups/`. These illustrate the intende
 | `practitioner` | The logged-in user | User's avatar or initials |
 | `transcription_ai` | Deepgram transcription results | Microphone icon |
 | `suggestions_ai` | Claude-generated suggestions for missing elements | Lightbulb icon |
-| `summary_ai` | Claude-generated transcript summary | Document icon |
+| `summary_ai` | Claude-generated summary | Document icon |
+| `assistant_ai` | Conversational AI responses (instructions, questions, fragments) | Chat bubble icon |
+| `skill_ai` | Generic skill processor (for future skills like X-ray, VBG) | Skill-specific icon |
 | `system` | Status updates, errors, prompts | Info/warning icon |
 
 ## Message Types
@@ -299,6 +355,300 @@ System-generated status messages.
 **UI Rendering:**
 - Centered, muted text
 - Optional action button
+
+---
+
+## Text Entry Message Types
+
+The following message types support text input from practitioners. See [text-entry.md](./text-entry.md) for full classification and processing details.
+
+### `text_entry` (participant: practitioner)
+
+Raw text input from the user. Created immediately when user submits text.
+
+```typescript
+{
+  participant_type: "practitioner",
+  message_type: "text_entry",
+  content: "Patient presents with chest pain, 3 days duration",
+  metadata: {
+    status: "sent" | "classifying" | "processing" | "completed" | "failed",
+    classification?: {
+      type: "consultation" | "instruction" | "fragment" | "question",
+      confidence: 0.95,
+      reasoning: "Contains clinical symptoms and timeline",
+      suggestedAction?: "add_content"  // For instruction type
+    },
+    error_message?: string  // Only on failure
+  }
+}
+```
+
+**UI Rendering:**
+
+Text entries appear as right-aligned bubbles (same as recordings) with tick status:
+
+| Status | Visual | Description |
+|--------|--------|-------------|
+| `sent` | ✓ (one grey tick) | Text submitted |
+| `classifying` | ✓ (one grey tick, animated) | AI determining intent |
+| `processing` | ✓✓ (two grey ticks) | Processing based on classification |
+| `completed` | ✓✓ (two blue ticks) | Fully processed |
+| `failed` | ✗ (red cross) + Retry | Error occurred |
+
+### `text_processed` (participant: transcription_ai)
+
+Result of processing consultation text (similar to transcription_result but from text input).
+
+```typescript
+{
+  participant_type: "transcription_ai",
+  message_type: "text_processed",
+  content: "Patient presents with chest pain...", // Enhanced text
+  metadata: {
+    text_entry_id: "uuid",
+    transcript_id: "uuid",
+    raw_text: "...",           // Original before vocabulary corrections
+    word_count: 45,
+    source_type: "text"        // Distinguishes from audio transcription
+  }
+}
+```
+
+**UI Rendering:**
+Same as `transcription_result` - conversational acknowledgment with artifact card.
+
+### `fragment_merged` (participant: assistant_ai)
+
+Confirmation that a text fragment was appended to an existing transcript.
+
+```typescript
+{
+  participant_type: "assistant_ai",
+  message_type: "fragment_merged",
+  content: "Added to your transcript: \"Patient also reports headaches...\"",
+  metadata: {
+    text_entry_id: "uuid",
+    transcript_id: "uuid",
+    fragment_text: "Patient also reports headaches starting last week",
+    suggestions_updated: true  // Whether suggestions were regenerated
+  }
+}
+```
+
+**UI Rendering:**
+- Left-aligned AI response
+- Brief confirmation text
+- Optional indicator if suggestions were updated
+
+### `instruction_response` (participant: assistant_ai)
+
+AI response to a practitioner instruction or question.
+
+```typescript
+{
+  participant_type: "assistant_ai",
+  message_type: "instruction_response",
+  content: "Done. Added diabetes history to the Past Medical History section.",
+  metadata: {
+    text_entry_id: "uuid",
+    instruction: "Add that patient has history of diabetes",
+    action: "add_content" | "edit_content" | "accept_suggestion" | "reject_suggestion" | "answer_question",
+    transcript_id?: "uuid",     // If transcript was modified
+    changes_made?: string       // Description of changes
+  }
+}
+```
+
+**UI Rendering:**
+- Left-aligned AI response
+- Conversational confirmation
+- For edits: "View changes" link to see diff
+
+### `clarification_request` (participant: assistant_ai)
+
+AI asking for clarification when instruction is ambiguous.
+
+```typescript
+{
+  participant_type: "assistant_ai",
+  message_type: "clarification_request",
+  content: "I'm not sure what you'd like me to fix. Could you clarify?",
+  metadata: {
+    text_entry_id: "uuid",
+    original_instruction: "fix that",
+    options?: [
+      "The medication names",
+      "The assessment section",
+      "The follow-up plan"
+    ]
+  }
+}
+```
+
+**UI Rendering:**
+- Left-aligned AI response
+- Question text
+- Optional quick-reply buttons for suggested options
+
+---
+
+## Generalized Message Types (Future-Proofing)
+
+The following message types provide a unified model for the skills architecture. They generalize the input-specific types above and are designed to support future skills (image analysis, VBG, ECG, etc.).
+
+See [skills.md](./skills.md) and [artifacts.md](./artifacts.md) for full architecture details.
+
+### `user_input` (participant: practitioner)
+
+Unified message type for all user inputs. Replaces/generalizes `recording_upload` and `text_entry`.
+
+```typescript
+{
+  participant_type: "practitioner",
+  message_type: "user_input",
+  content: null,  // For text: the text content; for others: null
+  metadata: {
+    user_input_id: "uuid",
+    input_type: "audio" | "text" | "image" | "document",
+
+    // For audio inputs
+    recording_id?: "uuid",
+    duration_seconds?: number,
+    upload_progress?: number,  // 0-100 during upload
+
+    // For image/document inputs
+    storage_path?: string,
+    file_name?: string,
+    file_size_bytes?: number,
+    mime_type?: string,
+    thumbnail_url?: string,    // For images
+
+    // Classification (from unified classifier)
+    classification?: {
+      skillId: "transcription" | "xray_analysis" | "vbg_analysis" | ...,
+      intent: "new_artifact" | "enrich_existing" | "instruction" | "question",
+      confidence: number,
+      targetArtifactId?: string,  // For enrich_existing
+    },
+
+    // Status
+    status: "received" | "uploading" | "classifying" | "processing" | "completed" | "failed",
+    error_message?: string
+  }
+}
+```
+
+**UI Rendering:**
+- Right-aligned bubble (practitioner side)
+- Renders based on input_type:
+  - `audio`: Waveform with play button
+  - `text`: Text bubble
+  - `image`: Thumbnail with expand
+  - `document`: File icon with name
+- Tick status below (same system as recording_upload)
+
+### `artifact_created` (participant: skill_ai)
+
+When a skill produces a new artifact. Generalizes `transcription_result` and `text_processed`.
+
+```typescript
+{
+  participant_type: "skill_ai",  // Or specific: transcription_ai, xray_ai, etc.
+  message_type: "artifact_created",
+  content: "I've analyzed the chest X-ray...",  // Conversational intro
+  metadata: {
+    artifact_id: "uuid",
+    artifact_type: "transcript" | "xray_analysis" | "vbg_analysis" | ...,
+    skill_id: "transcription" | "xray_analysis" | ...,
+    user_input_id: "uuid",         // The input that created this artifact
+    summary: "CXR: Right lower lobe pneumonia",
+    suggestions_count: 2,          // Number of suggestions generated
+
+    // Artifact-specific preview data
+    preview?: {
+      // For transcript
+      word_count?: number,
+      confidence?: number,
+
+      // For X-ray
+      findings_count?: number,
+      primary_finding?: string,
+      image_thumbnail?: string,
+
+      // For VBG
+      primary_disorder?: string,
+      ph?: number,
+      pco2?: number,
+    }
+  }
+}
+```
+
+**UI Rendering:**
+- Left-aligned AI response
+- Conversational acknowledgment text
+- Suggestions listed as questions (if any)
+- Artifact card with skill-specific preview
+
+### `artifact_updated` (participant: skill_ai | assistant_ai)
+
+When an existing artifact is modified (enriched, edited via instruction, etc.). Generalizes `fragment_merged`.
+
+```typescript
+{
+  participant_type: "assistant_ai",
+  message_type: "artifact_updated",
+  content: "Added the X-ray findings to your consultation notes.",
+  metadata: {
+    artifact_id: "uuid",
+    artifact_type: "transcript",
+    update_type: "enriched" | "edited" | "reference_added",
+    user_input_id?: "uuid",         // If triggered by user input
+    source_artifact_id?: "uuid",    // If adding cross-reference (e.g., X-ray → transcript)
+
+    changes: {
+      description: "Added imaging findings section",
+      added_content?: string,       // Preview of what was added
+      suggestions_regenerated: true
+    },
+
+    new_version: 2
+  }
+}
+```
+
+**UI Rendering:**
+- Left-aligned AI response
+- Brief confirmation text
+- "View changes" link for diff view
+- Updated artifact card
+
+### Message Type Migration Path
+
+The generalized types (`user_input`, `artifact_created`, `artifact_updated`) are designed to coexist with the specific types (`recording_upload`, `text_entry`, `transcription_result`, etc.).
+
+**Current implementation:**
+- Use specific types (`recording_upload`, `text_entry`, `transcription_result`)
+
+**Future migration:**
+- New skills use generalized types
+- Existing code continues to work with specific types
+- UI components handle both formats
+
+**Example: Adding X-ray skill**
+```typescript
+// X-ray image upload
+{ message_type: "user_input", metadata: { input_type: "image", ... } }
+
+// X-ray analysis result
+{ message_type: "artifact_created", metadata: { artifact_type: "xray_analysis", ... } }
+
+// Add to transcript
+{ message_type: "artifact_updated", metadata: { update_type: "reference_added", ... } }
+```
+
+---
 
 ## Routes & Navigation
 
@@ -651,14 +1001,42 @@ async function exportTranscript(conversationId: string): Promise<string> {
 | Component | Description |
 |-----------|-------------|
 | `ConversationList` | List of conversations with title, preview, timestamp |
-| `ConversationView` | Scrollable message list with recording bar at bottom |
+| `ConversationView` | Scrollable message list with input bar at bottom |
 | `MessageBubble` | Renders message based on participant/type |
 | `RecordingEntry` | Audio waveform with play button + tick status indicator |
+| `TextEntry` | Text message bubble with tick status indicator |
 | `TickStatus` | Renders 1-2 ticks (grey/blue) or error cross based on status |
 | `ArtifactCard` | Collapsible card for transcript with Review/Review on web actions |
-| `RecordingBar` | Waveform visualization + record button (red mic) at screen bottom ([mockup](mockups/mobile/Recorder.png)) |
+| `InputBar` | Combined text input + record button (see below) |
 | `WelcomePrompt` | Time-based greeting + prompt text for new conversations |
 | `Disclaimer` | "Mabel can make mistakes..." footer text |
+
+### Input Bar Component
+
+The input bar combines text entry and recording in a single component. The mic button transforms based on input state.
+
+```
+┌────────────────────────────────────────────────────────┐
+│  Type or record your notes...              🎤 │       │
+└────────────────────────────────────────────────────────┘
+                                              ↑
+                                        Record button
+                                        (default state)
+
+┌────────────────────────────────────────────────────────┐
+│  Patient has chest pain for 3 days             │ ➤    │
+└────────────────────────────────────────────────────────┘
+                                                   ↑
+                                              Send button
+                                        (when text entered)
+```
+
+**Behavior:**
+- Empty field: Show mic button (🎤) - tap to record
+- Text entered: Show send button (➤) - tap to submit text
+- Send button uses orange accent color when active
+- Can switch freely between typing and recording
+- Pressing send clears the input and creates a `text_entry` message
 
 ### Recording Entry Component
 

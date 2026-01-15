@@ -1,8 +1,80 @@
-# Transcription Service
+# Transcription Service (Skill Implementation)
 
-AI-powered transcription pipeline with Deepgram and Claude.
+AI-powered transcription pipeline with Deepgram and Claude. Supports both audio recordings and direct text entry.
 
-## Architecture
+## Skill Definition
+
+This document describes the **transcription skill** - the first and primary skill in the Mabel system. See [skills.md](./skills.md) for the overall skills architecture and [artifacts.md](./artifacts.md) for the artifact model.
+
+```typescript
+// Skill registration (see skills.md for full schema)
+const transcriptionSkill = {
+  id: "transcription",
+  name: "Medical Transcription",
+  inputTypes: ["audio", "text"],
+  artifactType: "transcript",
+  creditCost: 1,
+  canEnrichExisting: true,
+  processorFunction: "process-transcription",
+};
+```
+
+## Architecture Overview
+
+The system accepts two input types that converge into a shared processing pipeline:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              USER INPUT                                      │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                    ┌───────────────┴───────────────┐
+                    │                               │
+                    ▼                               ▼
+        ┌───────────────────┐           ┌───────────────────┐
+        │   AUDIO RECORDING │           │    TEXT ENTRY     │
+        │                   │           │                   │
+        │  Local Recording  │           │   classify-text   │
+        │  + Offline Queue  │           │   (AI classifier) │
+        │        │          │           │        │          │
+        │        ▼          │           │        ▼          │
+        │  Supabase Storage │           │   Route by type:  │
+        │  (TUS upload)     │           │   - consultation  │
+        │        │          │           │   - instruction   │
+        │        ▼          │           │   - fragment      │
+        │  process-recording│           │   - question      │
+        │        │          │           │        │          │
+        │        ▼          │           │        │          │
+        │    Deepgram API   │           │        │          │
+        │   (speech-to-text)│           │        │          │
+        └────────┬──────────┘           └────────┬──────────┘
+                 │                               │
+                 │    ┌──────────────────────────┘
+                 │    │ (consultation/fragment only)
+                 ▼    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    SHARED PROCESSING PIPELINE                                │
+│                                                                              │
+│   ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐      │
+│   │   Enhancement    │───►│     Summary      │───►│   Suggestions    │      │
+│   │  (vocabulary     │    │   Generation     │    │    Engine        │      │
+│   │   corrections)   │    │    (Claude)      │    │    (Claude)      │      │
+│   └──────────────────┘    └──────────────────┘    └──────────────────┘      │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+                    ┌───────────────────────────────┐
+                    │   Save to transcripts table   │
+                    │   Add conversation messages   │
+                    └───────────────────────────────┘
+```
+
+**Key distinction:** Audio recordings always flow through Deepgram first, while text entries skip speech-to-text and go directly to enhancement. Instructions and questions bypass the transcript pipeline entirely and are handled conversationally.
+
+For detailed text entry processing (classification, instruction handling, fragments), see [text-entry.md](./text-entry.md).
+
+## Audio Recording Pipeline
 
 ```
 Mobile App
@@ -326,6 +398,7 @@ ANTHROPIC_API_KEY=...
 
 ## Related Specs
 
+- [text-entry.md](./text-entry.md) - Text input classification and processing
 - [recording-upload.md](./recording-upload.md) - Upload triggers processing
 - [conversations.md](./conversations.md) - Message creation after processing
 - [learning-pipeline.md](./learning-pipeline.md) - Vocabulary corrections
