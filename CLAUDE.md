@@ -90,7 +90,7 @@ Use `lucide-react-native` for icons in the mobile app (matches `lucide-react` us
 import { MessageCirclePlus, Menu, X } from "lucide-react-native";
 
 // Use with explicit size and color props
-<MessageCirclePlus size={24} color="#f97316" />
+<MessageCirclePlus size={24} color="#f97316" />;
 ```
 
 ## Installing Expo Packages
@@ -107,6 +107,7 @@ pnpm add react-native-gesture-handler react-native-reanimated
 ```
 
 Common packages that should use `npx expo install`:
+
 - `react-native-gesture-handler`
 - `react-native-reanimated`
 - `react-native-screens`
@@ -115,6 +116,7 @@ Common packages that should use `npx expo install`:
 - Any package with native dependencies
 
 After installing new native packages, restart the development server with cache cleared:
+
 ```bash
 npx expo start --clear
 ```
@@ -124,6 +126,7 @@ npx expo start --clear
 The mobile app uses `@react-navigation/drawer` with expo-router. Required setup:
 
 1. Install dependencies:
+
 ```bash
 cd apps/mobile
 npx expo install react-native-gesture-handler react-native-reanimated
@@ -131,11 +134,13 @@ pnpm add @react-navigation/drawer
 ```
 
 2. Ensure babel.config.js includes the Reanimated plugin (already configured):
+
 ```js
-plugins: ["react-native-reanimated/plugin"]
+plugins: ["react-native-reanimated/plugin"];
 ```
 
 3. Wrap your drawer layout with `GestureHandlerRootView`:
+
 ```tsx
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { createDrawerNavigator } from "@react-navigation/drawer";
@@ -145,9 +150,7 @@ const Drawer = createDrawerNavigator();
 export default function Layout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <Drawer.Navigator>
-        {/* screens */}
-      </Drawer.Navigator>
+      <Drawer.Navigator>{/* screens */}</Drawer.Navigator>
     </GestureHandlerRootView>
   );
 }
@@ -276,6 +279,7 @@ export type Database = {
 ```
 
 **Why this is needed:**
+
 - The Supabase SDK v2.x uses `Exclude<keyof Database, "__InternalSupabase">` in its type definitions
 - Without this property, the schema types resolve to `never` causing all table operations to fail type checking
 - This is a known issue with the generated types from `supabase gen types`
@@ -283,11 +287,13 @@ export type Database = {
 **Using the typed Supabase client:**
 
 The `createClient()` functions in `lib/supabase/server.ts` and `lib/supabase/client.ts` import `Database` from `@project/db/types`. This provides:
+
 - Table name autocompletion: `supabase.from("conversations")`
 - Column name validation: `.select("id, title, created_at")`
 - Inferred return types: `data` will have the correct shape
 
 **NEVER use `as any` to bypass type errors.** If you see type errors like `'never'` for table names:
+
 1. Check that `__InternalSupabase` property exists in the Database type
 2. Rebuild `@project/db`: `cd packages/@project/db && pnpm build`
 3. Restart your TypeScript server in your IDE
@@ -345,7 +351,7 @@ This ensures reproducible database states across all environments and team membe
 ```
 ├── app/                      # App Router
 │   ├── (auth)/              # Auth group routes
-│   ├── (dashboard)/         # Protected routes
+│   ├── (hello)/         # Protected routes
 │   ├── api/                 # API routes
 │   └── globals.css          # Tailwind v4
 ├── components/

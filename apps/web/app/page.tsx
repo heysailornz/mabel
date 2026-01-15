@@ -53,9 +53,9 @@ export default async function Home() {
 
         <div className="flex gap-4 justify-center">
           {user ? (
-            <Link href="/dashboard">
+            <Link href="/hello">
               <Button size="lg" className="gap-2">
-                Go to Dashboard <ArrowRight className="w-4 h-4" />
+                Start transcribing <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
           ) : (
@@ -279,9 +279,9 @@ export async function getPosts() {
             </p>
             <div className="flex gap-4 justify-center">
               {user ? (
-                <Link href="/dashboard">
+                <Link href="/hello">
                   <Button size="lg" variant="secondary" className="gap-2">
-                    Go to Dashboard <ArrowRight className="w-4 h-4" />
+                    Start transcribing <ArrowRight className="w-4 h-4" />
                   </Button>
                 </Link>
               ) : (
