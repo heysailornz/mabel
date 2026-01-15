@@ -8,12 +8,12 @@ This phase establishes the extensible skills/artifacts architecture to support f
 
 | Status | Task                                                                | Specs                                                      |
 | ------ | ------------------------------------------------------------------- | ---------------------------------------------------------- |
-| [ ]    | Database: Rename transcripts → artifacts table                      | [database.md](./database.md), [artifacts.md](./artifacts.md) |
-| [ ]    | Database: Rename text_entries → user_inputs table                   | [database.md](./database.md)                               |
-| [ ]    | Database: Add input_type, classification columns to user_inputs     | [database.md](./database.md)                               |
-| [ ]    | Database: Add skill_id, artifact_type, content columns to artifacts | [database.md](./database.md), [artifacts.md](./artifacts.md) |
-| [ ]    | Database: Add uploads storage bucket for images/documents           | [database.md](./database.md)                               |
-| [ ]    | Database: Update credit functions for skills (use_skill_credits)    | [database.md](./database.md)                               |
+| [x]    | Database: Rename transcripts → artifacts table                      | [database.md](./database.md), [artifacts.md](./artifacts.md) |
+| [x]    | Database: Rename text_entries → user_inputs table                   | [database.md](./database.md)                               |
+| [x]    | Database: Add input_type, classification columns to user_inputs     | [database.md](./database.md)                               |
+| [x]    | Database: Add skill_id, artifact_type, content columns to artifacts | [database.md](./database.md), [artifacts.md](./artifacts.md) |
+| [x]    | Database: Add uploads storage bucket for images/documents           | [database.md](./database.md)                               |
+| [x]    | Database: Update credit functions for skills (use_skill_credits)    | [database.md](./database.md)                               |
 | [ ]    | Types: Create Skill definition types in @project/core               | [skills.md](./skills.md)                                   |
 | [ ]    | Types: Create Artifact types in @project/core                       | [artifacts.md](./artifacts.md)                             |
 | [ ]    | Types: Create UserInput types in @project/core                      | [database.md](./database.md)                               |
@@ -24,7 +24,7 @@ This phase establishes the extensible skills/artifacts architecture to support f
 | [ ]    | Edge function: Implement skill router                               | [skills.md](./skills.md)                                   |
 | [ ]    | UI: Generalize message rendering for user_input type                | [conversations.md](./conversations.md)                     |
 | [ ]    | UI: Generalize artifact card for multiple artifact types            | [artifacts.md](./artifacts.md), [conversations.md](./conversations.md) |
-| [ ]    | Migration: Update existing data (transcripts → artifacts)           | [database.md](./database.md)                               |
+| [x]    | Migration: Update existing data (transcripts → artifacts)           | [database.md](./database.md)                               |
 
 **Note**: This phase can be implemented incrementally alongside other phases. The existing specific message types (`recording_upload`, `transcription_result`) continue to work while the generalized types are added.
 

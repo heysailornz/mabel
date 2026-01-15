@@ -34,6 +34,107 @@ export type Database = {
   }
   public: {
     Tables: {
+      artifacts: {
+        Row: {
+          artifact_type: string | null
+          content: Json | null
+          conversation_id: string | null
+          created_at: string
+          edited_text: string | null
+          enhanced_text: string | null
+          id: string
+          is_edited: boolean | null
+          practitioner_id: string
+          raw_content: string | null
+          raw_text: string | null
+          recording_id: string
+          references: Json | null
+          skill_id: string | null
+          source_input_id: string | null
+          status: string | null
+          suggestions: Json | null
+          summary: string | null
+          title: string | null
+          updated_at: string
+          version: number | null
+        }
+        Insert: {
+          artifact_type?: string | null
+          content?: Json | null
+          conversation_id?: string | null
+          created_at?: string
+          edited_text?: string | null
+          enhanced_text?: string | null
+          id?: string
+          is_edited?: boolean | null
+          practitioner_id: string
+          raw_content?: string | null
+          raw_text?: string | null
+          recording_id: string
+          references?: Json | null
+          skill_id?: string | null
+          source_input_id?: string | null
+          status?: string | null
+          suggestions?: Json | null
+          summary?: string | null
+          title?: string | null
+          updated_at?: string
+          version?: number | null
+        }
+        Update: {
+          artifact_type?: string | null
+          content?: Json | null
+          conversation_id?: string | null
+          created_at?: string
+          edited_text?: string | null
+          enhanced_text?: string | null
+          id?: string
+          is_edited?: boolean | null
+          practitioner_id?: string
+          raw_content?: string | null
+          raw_text?: string | null
+          recording_id?: string
+          references?: Json | null
+          skill_id?: string | null
+          source_input_id?: string | null
+          status?: string | null
+          suggestions?: Json | null
+          summary?: string | null
+          title?: string | null
+          updated_at?: string
+          version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artifacts_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artifacts_practitioner_id_fkey"
+            columns: ["practitioner_id"]
+            isOneToOne: false
+            referencedRelation: "practitioners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_artifacts_source_input"
+            columns: ["source_input_id"]
+            isOneToOne: false
+            referencedRelation: "user_inputs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transcripts_recording_id_fkey"
+            columns: ["recording_id"]
+            isOneToOne: false
+            referencedRelation: "recordings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversation_messages: {
         Row: {
           content: string | null
@@ -110,41 +211,57 @@ export type Database = {
       credit_transactions: {
         Row: {
           amount: number
+          artifact_id: string | null
           balance_after: number
           created_at: string
           id: string
           notes: string | null
           practitioner_id: string
           recording_id: string | null
+          skill_id: string | null
           stripe_checkout_session_id: string | null
           stripe_payment_intent_id: string | null
           type: string
+          user_input_id: string | null
         }
         Insert: {
           amount: number
+          artifact_id?: string | null
           balance_after: number
           created_at?: string
           id?: string
           notes?: string | null
           practitioner_id: string
           recording_id?: string | null
+          skill_id?: string | null
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
           type: string
+          user_input_id?: string | null
         }
         Update: {
           amount?: number
+          artifact_id?: string | null
           balance_after?: number
           created_at?: string
           id?: string
           notes?: string | null
           practitioner_id?: string
           recording_id?: string | null
+          skill_id?: string | null
           stripe_checkout_session_id?: string | null
           stripe_payment_intent_id?: string | null
           type?: string
+          user_input_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "credit_transactions_artifact_id_fkey"
+            columns: ["artifact_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "credit_transactions_practitioner_id_fkey"
             columns: ["practitioner_id"]
@@ -157,6 +274,13 @@ export type Database = {
             columns: ["recording_id"]
             isOneToOne: false
             referencedRelation: "recordings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_transactions_user_input_id_fkey"
+            columns: ["user_input_id"]
+            isOneToOne: false
+            referencedRelation: "user_inputs"
             referencedColumns: ["id"]
           },
         ]
@@ -239,43 +363,66 @@ export type Database = {
           },
         ]
       }
-      transcripts: {
+      user_inputs: {
         Row: {
+          classification: Json | null
+          conversation_id: string
           created_at: string
-          edited_text: string | null
-          enhanced_text: string | null
+          error_message: string | null
           id: string
-          raw_text: string | null
-          recording_id: string
-          suggestions: Json | null
-          summary: string | null
+          input_type: string
+          practitioner_id: string
+          raw_content: string | null
+          recording_id: string | null
+          status: string
+          storage_path: string | null
           updated_at: string
         }
         Insert: {
+          classification?: Json | null
+          conversation_id: string
           created_at?: string
-          edited_text?: string | null
-          enhanced_text?: string | null
+          error_message?: string | null
           id?: string
-          raw_text?: string | null
-          recording_id: string
-          suggestions?: Json | null
-          summary?: string | null
+          input_type: string
+          practitioner_id: string
+          raw_content?: string | null
+          recording_id?: string | null
+          status?: string
+          storage_path?: string | null
           updated_at?: string
         }
         Update: {
+          classification?: Json | null
+          conversation_id?: string
           created_at?: string
-          edited_text?: string | null
-          enhanced_text?: string | null
+          error_message?: string | null
           id?: string
-          raw_text?: string | null
-          recording_id?: string
-          suggestions?: Json | null
-          summary?: string | null
+          input_type?: string
+          practitioner_id?: string
+          raw_content?: string | null
+          recording_id?: string | null
+          status?: string
+          storage_path?: string | null
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "transcripts_recording_id_fkey"
+            foreignKeyName: "user_inputs_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_inputs_practitioner_id_fkey"
+            columns: ["practitioner_id"]
+            isOneToOne: false
+            referencedRelation: "practitioners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_inputs_recording_id_fkey"
             columns: ["recording_id"]
             isOneToOne: false
             referencedRelation: "recordings"
@@ -361,11 +508,11 @@ export type Database = {
       add_credits: {
         Args: {
           p_amount: number
-          p_notes?: string
           p_practitioner_id: string
-          p_recording_id?: string
+          p_skill_id?: string
           p_stripe_session_id?: string
           p_type: string
+          p_user_input_id?: string
         }
         Returns: number
       }
@@ -373,8 +520,26 @@ export type Database = {
         Args: { p_practitioner_id: string; p_recording_id: string }
         Returns: number
       }
+      refund_skill_credits: {
+        Args: {
+          p_credit_amount?: number
+          p_practitioner_id: string
+          p_skill_id: string
+          p_user_input_id: string
+        }
+        Returns: number
+      }
       use_credit: {
         Args: { p_practitioner_id: string; p_recording_id: string }
+        Returns: boolean
+      }
+      use_skill_credits: {
+        Args: {
+          p_credit_cost?: number
+          p_practitioner_id: string
+          p_skill_id: string
+          p_user_input_id: string
+        }
         Returns: boolean
       }
     }
