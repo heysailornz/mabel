@@ -14,15 +14,13 @@ This phase establishes the extensible skills/artifacts architecture to support f
 | [x]    | Database: Add skill_id, artifact_type, content columns to artifacts | [database.md](./database.md), [artifacts.md](./artifacts.md)     |
 | [x]    | Database: Add uploads storage bucket for images/documents           | [database.md](./database.md)                                     |
 | [x]    | Database: Update credit functions for skills (use_skill_credits)    | [database.md](./database.md)                                     |
-| [ ]    | Types: Create Skill definition types in @project/core               | [skills.md](./skills.md)                                         |
-| [ ]    | Types: Create Artifact types in @project/core                       | [artifacts.md](./artifacts.md)                                   |
-| [ ]    | Types: Create UserInput types in @project/core                      | [database.md](./database.md)                                     |
-| [ ]    | Core: Implement skill registry (in-code, not database)              | [skills.md](./skills.md)                                         |
-| [ ]    | Core: Register transcription skill definition                       | [skills.md](./skills.md), [transcription.md](./transcription.md) |
-| [ ]    | Core: Register text_entry skill definition                          | [skills.md](./skills.md), [text-entry.md](./text-entry.md)       |
+| [x]    | Types: Create Skill definition types in @project/core               | [skills.md](./skills.md)                                         |
+| [x]    | Types: Create Artifact types in @project/core                       | [artifacts.md](./artifacts.md)                                   |
+| [x]    | Types: Create UserInput types in @project/core                      | [database.md](./database.md)                                     |
+| [x]    | Core: Implement skill registry (in-code, not database)              | [skills.md](./skills.md)                                         |
+| [x]    | Core: Register transcription skill definition                       | [skills.md](./skills.md), [transcription.md](./transcription.md) |
+| [x]    | Core: Register text_entry skill definition                          | [skills.md](./skills.md), [text-entry.md](./text-entry.md)       |
 | [x]    | Migration: Update existing data (transcripts → artifacts)           | [database.md](./database.md)                                     |
-
-**Note**: This phase can be implemented incrementally alongside other phases. The existing specific message types (`recording_upload`, `transcription_result`) continue to work while the generalized types are added.
 
 ## Phase 1: Core Infrastructure
 
@@ -38,23 +36,21 @@ This phase establishes the extensible skills/artifacts architecture to support f
 
 ## Phase 1.5: Conversations
 
-| Status | Task                                                                 | Specs                                                                  |
-| ------ | -------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| [x]    | Database: Add conversations and conversation_messages tables         | [database.md](./database.md), [conversations.md](./conversations.md)   |
-| [x]    | Database: Add conversation_id to recordings table                    | [database.md](./database.md)                                           |
-| [x]    | Database: RLS policies for conversation access                       | [database.md](./database.md), [security.md](./security.md)             |
-| [x]    | Types: Add conversation types to @project/core                       | [conversations.md](./conversations.md)                                 |
-| [x]    | Hooks: Platform-specific conversation hooks (web + mobile)           | [conversations.md](./conversations.md)                                 |
-| [x]    | Web: Rename (dashboard) to (app) route group                         | [conversations.md](./conversations.md)                                 |
-| [x]    | Web: Add side menu component with conversation history               | [conversations.md](./conversations.md)                                 |
-| [x]    | Web: /hello page - new conversation prompt                           | [conversations.md](./conversations.md)                                 |
-| [x]    | Web: /c/[id] page - conversation view with messages                  | [conversations.md](./conversations.md)                                 |
-| [x]    | Mobile: Drawer layout for conversation history                       | [conversations.md](./conversations.md)                                 |
-| [x]    | Mobile: Conversation view with message list                          | [conversations.md](./conversations.md)                                 |
-| [x]    | Realtime: Subscribe to conversation messages for live updates        | [conversations.md](./conversations.md)                                 |
-| [x]    | Mobile: Notification dots for new messages (feature parity with web) | [conversations.md](./conversations.md)                                 |
-| [ ]    | UI: Generalize message rendering for user_input type                 | [conversations.md](./conversations.md)                                 |
-| [ ]    | UI: Generalize artifact card for multiple artifact types             | [artifacts.md](./artifacts.md), [conversations.md](./conversations.md) |
+| Status | Task                                                                 | Specs                                                                |
+| ------ | -------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| [x]    | Database: Add conversations and conversation_messages tables         | [database.md](./database.md), [conversations.md](./conversations.md) |
+| [x]    | Database: Add conversation_id to recordings table                    | [database.md](./database.md)                                         |
+| [x]    | Database: RLS policies for conversation access                       | [database.md](./database.md), [security.md](./security.md)           |
+| [x]    | Types: Add conversation types to @project/core                       | [conversations.md](./conversations.md)                               |
+| [x]    | Hooks: Platform-specific conversation hooks (web + mobile)           | [conversations.md](./conversations.md)                               |
+| [x]    | Web: Rename (dashboard) to (app) route group                         | [conversations.md](./conversations.md)                               |
+| [x]    | Web: Add side menu component with conversation history               | [conversations.md](./conversations.md)                               |
+| [x]    | Web: /hello page - new conversation prompt                           | [conversations.md](./conversations.md)                               |
+| [x]    | Web: /c/[id] page - conversation view with messages                  | [conversations.md](./conversations.md)                               |
+| [x]    | Mobile: Drawer layout for conversation history                       | [conversations.md](./conversations.md)                               |
+| [x]    | Mobile: Conversation view with message list                          | [conversations.md](./conversations.md)                               |
+| [x]    | Realtime: Subscribe to conversation messages for live updates        | [conversations.md](./conversations.md)                               |
+| [x]    | Mobile: Notification dots for new messages (feature parity with web) | [conversations.md](./conversations.md)                               |
 
 ## Phase 2: Recording & Upload
 
@@ -69,10 +65,10 @@ This phase establishes the extensible skills/artifacts architecture to support f
 | [ ]    | Edge function: Implement skill router                             | [skills.md](./skills.md)                                                             |
 | [ ]    | Backend: Storage bucket configuration with RLS                    | [recording-upload.md](./recording-upload.md), [security.md](./security.md)           |
 | [ ]    | Backend: Storage trigger for processing pipeline                  | [recording-upload.md](./recording-upload.md), [transcription.md](./transcription.md) |
+| [ ]    | UI: Generalize message rendering for user_input type              | [conversations.md](./conversations.md)                                               |
+| [ ]    | UI: Generalize artifact card for multiple artifact types          | [artifacts.md](./artifacts.md), [conversations.md](./conversations.md)               |
 
 ## Phase 2.5: Text Entry Processing
-
-**Note**: If Phase 0.5 is implemented first, use `user_inputs` table instead of `text_entries`, and use generalized message types.
 
 | Status | Task                                                                            | Specs                                                                    |
 | ------ | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |

@@ -493,9 +493,11 @@ AI asking for clarification when instruction is ambiguous.
 
 ---
 
-## Generalized Message Types (Future-Proofing)
+## Unified Message Types
 
-The following message types provide a unified model for the skills architecture. They generalize the input-specific types above and are designed to support future skills (image analysis, VBG, ECG, etc.).
+The following message types provide a unified model for the skills architecture. They support all current skills (transcription, text entry) and future skills (image analysis, VBG, ECG, etc.).
+
+**Note:** These are the primary message types used in the application. See the specific types in the sections above for legacy reference only.
 
 See [skills.md](./skills.md) and [artifacts.md](./artifacts.md) for full architecture details.
 
@@ -623,30 +625,6 @@ When an existing artifact is modified (enriched, edited via instruction, etc.). 
 - Brief confirmation text
 - "View changes" link for diff view
 - Updated artifact card
-
-### Message Type Migration Path
-
-The generalized types (`user_input`, `artifact_created`, `artifact_updated`) are designed to coexist with the specific types (`recording_upload`, `text_entry`, `transcription_result`, etc.).
-
-**Current implementation:**
-- Use specific types (`recording_upload`, `text_entry`, `transcription_result`)
-
-**Future migration:**
-- New skills use generalized types
-- Existing code continues to work with specific types
-- UI components handle both formats
-
-**Example: Adding X-ray skill**
-```typescript
-// X-ray image upload
-{ message_type: "user_input", metadata: { input_type: "image", ... } }
-
-// X-ray analysis result
-{ message_type: "artifact_created", metadata: { artifact_type: "xray_analysis", ... } }
-
-// Add to transcript
-{ message_type: "artifact_updated", metadata: { update_type: "reference_added", ... } }
-```
 
 ---
 

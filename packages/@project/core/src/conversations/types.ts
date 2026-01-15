@@ -1,95 +1,239 @@
-import type { Database } from "@project/db/types";
+/**
+ * Conversation Types
+ *
+ * Conversations are chat-style threads containing practitioner inputs,
+ * AI responses (artifacts, suggestions), and user actions.
+ *
+ * This uses the generalized skills/artifacts architecture for extensibility.
+ */
 
-// Base types from database
+import type { Database } from "@project/db/types";
+import type { InputType, ClassificationIntent, ArtifactType } from "../skills/types";
+
+// =============================================================================
+// Base Types from Database
+// =============================================================================
+
 export type Conversation = Database["public"]["Tables"]["conversations"]["Row"];
 export type ConversationInsert = Database["public"]["Tables"]["conversations"]["Insert"];
 export type ConversationMessage = Database["public"]["Tables"]["conversation_messages"]["Row"];
 export type ConversationMessageInsert = Database["public"]["Tables"]["conversation_messages"]["Insert"];
 
-// Participant types
+// =============================================================================
+// Participant Types
+// =============================================================================
+
 export const PARTICIPANT_TYPES = [
-  "practitioner",
-  "transcription_ai",
-  "suggestions_ai",
-  "summary_ai",
-  "system",
+  "practitioner", // The logged-in user
+  "transcription_ai", // Deepgram transcription results
+  "suggestions_ai", // Claude-generated suggestions
+  "summary_ai", // Claude-generated summary
+  "assistant_ai", // Conversational AI (instructions, questions, fragments)
+  "skill_ai", // Generic skill processor (X-ray, VBG, etc.)
+  "system", // Status updates, errors, prompts
 ] as const;
 export type ParticipantType = (typeof PARTICIPANT_TYPES)[number];
 
-// Message types
+// =============================================================================
+// Message Types
+// =============================================================================
+
 export const MESSAGE_TYPES = [
-  "recording_upload",
-  "transcription_result",
-  "suggestion",
-  "summary",
-  "user_edit",
-  "accepted_suggestion",
-  "status_update",
+  // User inputs
+  "user_input", // Unified input type (audio, text, image, document)
+
+  // Skill outputs
+  "artifact_created", // New artifact from skill processing
+  "artifact_updated", // Existing artifact modified
+
+  // Suggestions and summary
+  "suggestion", // AI suggestions for missing elements
+  "summary", // One-sentence summary
+
+  // User actions
+  "user_edit", // User edited an artifact
+  "accepted_suggestion", // User accepted a suggestion
+
+  // Assistant interactions
+  "instruction_response", // AI response to instruction/question
+  "clarification_request", // AI asking for clarification
+
+  // System
+  "status_update", // System status messages
 ] as const;
 export type MessageType = (typeof MESSAGE_TYPES)[number];
 
-// Recording upload status (for tick indicator)
-export const RECORDING_UPLOAD_STATUSES = [
-  "recording",
-  "local_saved",
-  "uploading",
-  "uploaded",
-  "processing",
-  "completed",
-  "failed",
+// =============================================================================
+// User Input Message Status (for tick indicator in UI)
+// Extends database status with upload-specific states
+// =============================================================================
+
+export const USER_INPUT_MESSAGE_STATUSES = [
+  "received", // Input received
+  "uploading", // File upload in progress
+  "classifying", // AI determining intent
+  "processing", // Skill processing
+  "completed", // Fully processed
+  "failed", // Error occurred
 ] as const;
-export type RecordingUploadStatus = (typeof RECORDING_UPLOAD_STATUSES)[number];
+export type UserInputMessageStatus = (typeof USER_INPUT_MESSAGE_STATUSES)[number];
 
-// Metadata types for each message type
-export interface RecordingUploadMetadata {
-  recording_id: string;
-  duration_seconds: number;
-  status: RecordingUploadStatus;
-  upload_progress?: number; // 0-100, only during upload
-  error_message?: string; // Only on failure
+// =============================================================================
+// Metadata Types
+// =============================================================================
+
+/**
+ * user_input - Unified message type for all user inputs
+ */
+export interface UserInputMetadata {
+  user_input_id: string;
+  input_type: InputType;
+
+  // For audio inputs
+  recording_id?: string;
+  duration_seconds?: number;
+  upload_progress?: number; // 0-100 during upload
+
+  // For image/document inputs
+  storage_path?: string;
+  file_name?: string;
+  file_size_bytes?: number;
+  mime_type?: string;
+  thumbnail_url?: string;
+
+  // Classification (from unified classifier)
+  classification?: {
+    skillId: string;
+    intent: ClassificationIntent;
+    confidence: number;
+    targetArtifactId?: string; // For enrich_existing
+  };
+
+  // Status
+  status: UserInputMessageStatus;
+  error_message?: string;
 }
 
-export interface TranscriptionResultMetadata {
-  recording_id: string;
-  transcript_id: string;
-  raw_text: string;
-  word_count: number;
-  confidence: number;
+/**
+ * artifact_created - When a skill produces a new artifact
+ */
+export interface ArtifactCreatedMetadata {
+  artifact_id: string;
+  artifact_type: ArtifactType;
+  skill_id: string;
+  user_input_id: string;
+  summary: string;
+  suggestions_count: number;
+
+  // Artifact-specific preview data
+  preview?: {
+    // For transcript
+    word_count?: number;
+    confidence?: number;
+
+    // For X-ray
+    findings_count?: number;
+    primary_finding?: string;
+    image_thumbnail?: string;
+
+    // For VBG
+    primary_disorder?: string;
+    ph?: number;
+    pco2?: number;
+  };
 }
 
+/**
+ * artifact_updated - When an existing artifact is modified
+ */
+export interface ArtifactUpdatedMetadata {
+  artifact_id: string;
+  artifact_type: ArtifactType;
+  update_type: "enriched" | "edited" | "reference_added";
+  user_input_id?: string;
+  source_artifact_id?: string; // If adding cross-reference
+
+  changes: {
+    description: string;
+    added_content?: string;
+    suggestions_regenerated: boolean;
+  };
+
+  new_version: number;
+}
+
+/**
+ * Suggestion item within a suggestion message
+ */
 export interface SuggestionItem {
   id: string;
-  type: "missing_element";
-  element: string;
+  type: "missing_element" | "clarification" | "enhancement";
+  element?: string;
   message: string;
-  suggested_text: string;
+  suggested_text?: string;
   status: "pending" | "accepted" | "dismissed";
 }
 
+/**
+ * suggestion - AI suggestions for missing elements
+ */
 export interface SuggestionMetadata {
-  recording_id: string;
+  artifact_id: string;
   suggestions: SuggestionItem[];
 }
 
+/**
+ * summary - One-sentence summary
+ */
 export interface SummaryMetadata {
-  recording_id: string;
+  artifact_id: string;
 }
 
+/**
+ * user_edit - User edited an artifact
+ */
 export interface UserEditMetadata {
-  recording_id: string;
-  transcript_id: string;
+  artifact_id: string;
   original_text: string;
   edit_summary?: string;
 }
 
+/**
+ * accepted_suggestion - User accepted a suggestion
+ */
 export interface AcceptedSuggestionMetadata {
   suggestion_message_id: string;
   suggestion_id: string;
+  artifact_id: string;
   applied_text: string;
 }
 
+/**
+ * instruction_response - AI response to instruction/question
+ */
+export interface InstructionResponseMetadata {
+  user_input_id: string;
+  instruction: string;
+  action: "add_content" | "edit_content" | "accept_suggestion" | "reject_suggestion" | "answer_question";
+  artifact_id?: string;
+  changes_made?: string;
+}
+
+/**
+ * clarification_request - AI asking for clarification
+ */
+export interface ClarificationRequestMetadata {
+  user_input_id: string;
+  original_instruction: string;
+  options?: string[];
+}
+
+/**
+ * status_update - System status messages
+ */
 export interface StatusUpdateMetadata {
-  recording_id?: string;
+  user_input_id?: string;
+  artifact_id?: string;
   status: "info" | "warning" | "error";
   action?: {
     label: string;
@@ -97,27 +241,42 @@ export interface StatusUpdateMetadata {
   };
 }
 
-// Union type for all metadata
+// =============================================================================
+// Union Type for All Metadata
+// =============================================================================
+
 export type MessageMetadata =
-  | RecordingUploadMetadata
-  | TranscriptionResultMetadata
+  | UserInputMetadata
+  | ArtifactCreatedMetadata
+  | ArtifactUpdatedMetadata
   | SuggestionMetadata
   | SummaryMetadata
   | UserEditMetadata
   | AcceptedSuggestionMetadata
+  | InstructionResponseMetadata
+  | ClarificationRequestMetadata
   | StatusUpdateMetadata;
 
-// Typed message variants
-export interface RecordingUploadMessage extends Omit<ConversationMessage, "metadata"> {
+// =============================================================================
+// Typed Message Variants
+// =============================================================================
+
+export interface UserInputMessage extends Omit<ConversationMessage, "metadata"> {
   participant_type: "practitioner";
-  message_type: "recording_upload";
-  metadata: RecordingUploadMetadata;
+  message_type: "user_input";
+  metadata: UserInputMetadata;
 }
 
-export interface TranscriptionResultMessage extends Omit<ConversationMessage, "metadata"> {
-  participant_type: "transcription_ai";
-  message_type: "transcription_result";
-  metadata: TranscriptionResultMetadata;
+export interface ArtifactCreatedMessage extends Omit<ConversationMessage, "metadata"> {
+  participant_type: "skill_ai" | "transcription_ai";
+  message_type: "artifact_created";
+  metadata: ArtifactCreatedMetadata;
+}
+
+export interface ArtifactUpdatedMessage extends Omit<ConversationMessage, "metadata"> {
+  participant_type: "skill_ai" | "assistant_ai";
+  message_type: "artifact_updated";
+  metadata: ArtifactUpdatedMetadata;
 }
 
 export interface SuggestionMessage extends Omit<ConversationMessage, "metadata"> {
@@ -144,33 +303,138 @@ export interface AcceptedSuggestionMessage extends Omit<ConversationMessage, "me
   metadata: AcceptedSuggestionMetadata;
 }
 
+export interface InstructionResponseMessage extends Omit<ConversationMessage, "metadata"> {
+  participant_type: "assistant_ai";
+  message_type: "instruction_response";
+  metadata: InstructionResponseMetadata;
+}
+
+export interface ClarificationRequestMessage extends Omit<ConversationMessage, "metadata"> {
+  participant_type: "assistant_ai";
+  message_type: "clarification_request";
+  metadata: ClarificationRequestMetadata;
+}
+
 export interface StatusUpdateMessage extends Omit<ConversationMessage, "metadata"> {
   participant_type: "system";
   message_type: "status_update";
   metadata: StatusUpdateMetadata;
 }
 
-// Discriminated union of all message types
+// =============================================================================
+// Discriminated Union of All Message Types
+// =============================================================================
+
 export type TypedConversationMessage =
-  | RecordingUploadMessage
-  | TranscriptionResultMessage
+  | UserInputMessage
+  | ArtifactCreatedMessage
+  | ArtifactUpdatedMessage
   | SuggestionMessage
   | SummaryMessage
   | UserEditMessage
   | AcceptedSuggestionMessage
+  | InstructionResponseMessage
+  | ClarificationRequestMessage
   | StatusUpdateMessage;
 
-// Conversation with last message for list display
+// =============================================================================
+// Helper Types
+// =============================================================================
+
+/**
+ * Conversation with last message for list display
+ */
 export interface ConversationWithPreview extends Conversation {
   last_message?: ConversationMessage;
   message_count: number;
 }
 
-// Time-based greeting helper
+// =============================================================================
+// Status Display Helpers
+// =============================================================================
+
+/**
+ * Get tick status display for user input
+ */
+export function getTickStatus(status: UserInputMessageStatus): {
+  ticks: 0 | 1 | 2;
+  color: "grey" | "blue";
+  animated: boolean;
+  error: boolean;
+} {
+  switch (status) {
+    case "received":
+      return { ticks: 1, color: "grey", animated: false, error: false };
+    case "uploading":
+    case "classifying":
+      return { ticks: 1, color: "grey", animated: true, error: false };
+    case "processing":
+      return { ticks: 2, color: "grey", animated: false, error: false };
+    case "completed":
+      return { ticks: 2, color: "blue", animated: false, error: false };
+    case "failed":
+      return { ticks: 0, color: "grey", animated: false, error: true };
+  }
+}
+
+/**
+ * Time-based greeting helper
+ */
 export function getTimeBasedGreeting(): string {
   const hour = new Date().getHours();
   if (hour >= 5 && hour < 12) return "Good morning!";
   if (hour >= 12 && hour < 17) return "Good afternoon!";
   if (hour >= 17 && hour < 21) return "Good evening!";
   return "Working late?";
+}
+
+// =============================================================================
+// Type Guards
+// =============================================================================
+
+export function isUserInputMessage(msg: ConversationMessage): boolean {
+  return msg.message_type === "user_input";
+}
+
+export function isArtifactCreatedMessage(msg: ConversationMessage): boolean {
+  return msg.message_type === "artifact_created";
+}
+
+export function isArtifactUpdatedMessage(msg: ConversationMessage): boolean {
+  return msg.message_type === "artifact_updated";
+}
+
+export function isSuggestionMessage(msg: ConversationMessage): boolean {
+  return msg.message_type === "suggestion";
+}
+
+export function isStatusUpdateMessage(msg: ConversationMessage): boolean {
+  return msg.message_type === "status_update";
+}
+
+/**
+ * Check if message is from practitioner (right-aligned in UI)
+ */
+export function isPractitionerMessage(msg: ConversationMessage): boolean {
+  return msg.participant_type === "practitioner";
+}
+
+/**
+ * Check if message is from AI (left-aligned in UI)
+ */
+export function isAIMessage(msg: ConversationMessage): boolean {
+  return (
+    msg.participant_type === "transcription_ai" ||
+    msg.participant_type === "suggestions_ai" ||
+    msg.participant_type === "summary_ai" ||
+    msg.participant_type === "assistant_ai" ||
+    msg.participant_type === "skill_ai"
+  );
+}
+
+/**
+ * Check if message is system message (center-aligned in UI)
+ */
+export function isSystemMessage(msg: ConversationMessage): boolean {
+  return msg.participant_type === "system";
 }
