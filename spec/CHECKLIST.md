@@ -54,19 +54,21 @@ This phase establishes the extensible skills/artifacts architecture to support f
 
 ## Phase 2: Recording & Upload
 
-| Status | Task                                                              | Specs                                                                                |
-| ------ | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| [ ]    | Mobile: Recording controls integration                            | [conversations.md](./conversations.md), [recording-upload.md](./recording-upload.md) |
-| [ ]    | Mobile: Audio recording interface with expo-av (AAC mono 128kbps) | [recording-upload.md](./recording-upload.md)                                         |
-| [ ]    | Mobile: Local file storage with expo-file-system                  | [recording-upload.md](./recording-upload.md)                                         |
-| [ ]    | Mobile: Offline queue persistence with MMKV                       | [recording-upload.md](./recording-upload.md)                                         |
-| [ ]    | Mobile: TUS resumable uploads with tus-js-client                  | [recording-upload.md](./recording-upload.md)                                         |
-| [ ]    | Mobile: Upload progress UI and retry handling                     | [recording-upload.md](./recording-upload.md)                                         |
-| [ ]    | Edge function: Implement skill router                             | [skills.md](./skills.md)                                                             |
-| [ ]    | Backend: Storage bucket configuration with RLS                    | [recording-upload.md](./recording-upload.md), [security.md](./security.md)           |
-| [ ]    | Backend: Storage trigger for processing pipeline                  | [recording-upload.md](./recording-upload.md), [transcription.md](./transcription.md) |
-| [ ]    | UI: Generalize message rendering for user_input type              | [conversations.md](./conversations.md)                                               |
-| [ ]    | UI: Generalize artifact card for multiple artifact types          | [artifacts.md](./artifacts.md), [conversations.md](./conversations.md)               |
+| Status | Task                                                                     | Specs                                                                                |
+| ------ | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| [ ]    | Mobile: https://github.com/gorhom/react-native-bottom-sheet integration  |
+| [ ]    | Mobile: Recording controls integration                                   | [conversations.md](./conversations.md), [recording-upload.md](./recording-upload.md) |
+| [ ]    | Mobile: Audio recording interface with expo-av (AAC mono 128kbps)        | [recording-upload.md](./recording-upload.md)                                         |
+| [ ]    | Mobile: Local file storage with expo-file-system                         | [recording-upload.md](./recording-upload.md)                                         |
+| [ ]    | Mobile: Offline queue persistence with MMKV                              | [recording-upload.md](./recording-upload.md)                                         |
+| [ ]    | Mobile: TUS resumable uploads with tus-js-client                         | [recording-upload.md](./recording-upload.md)                                         |
+| [ ]    | Mobile: Upload progress UI and retry handling                            | [recording-upload.md](./recording-upload.md)                                         |
+| [ ]    | Web: Feature parity with mobile, using RNR Card instead of bottom sheets |
+| [ ]    | Edge function: Implement skill router                                    | [skills.md](./skills.md)                                                             |
+| [ ]    | Backend: Storage bucket configuration with RLS                           | [recording-upload.md](./recording-upload.md), [security.md](./security.md)           |
+| [ ]    | Backend: Storage trigger for processing pipeline                         | [recording-upload.md](./recording-upload.md), [transcription.md](./transcription.md) |
+| [ ]    | UI: Generalize message rendering for user_input type                     | [conversations.md](./conversations.md)                                               |
+| [ ]    | UI: Generalize artifact card for multiple artifact types                 | [artifacts.md](./artifacts.md), [conversations.md](./conversations.md)               |
 
 ## Phase 2.5: Text Entry Processing
 
