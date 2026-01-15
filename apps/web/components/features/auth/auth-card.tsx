@@ -28,7 +28,7 @@ export function AuthCard() {
       return result ?? { success: false };
     },
     onSuccess: () => {
-      router.push("/dashboard");
+      router.push("/hello");
     },
     onError: (message) =>
       toast({

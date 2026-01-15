@@ -448,7 +448,7 @@ export default async function Layout({ children }) {
 The starter includes a complete authentication setup:
 
 - Sign up/Sign in pages at `/signup` and `/signin`
-- Protected dashboard routes under `app/(dashboard)/`
+- Protected dashboard routes under `app/(hello)/`
 - Server actions in `server/actions/auth.ts`
 - Auth middleware configuration
 - Profile creation on signup
@@ -465,7 +465,7 @@ export const config = {
   matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 }
 
-// app/(dashboard)/layout.tsx
+// app/(hello)/layout.tsx
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
