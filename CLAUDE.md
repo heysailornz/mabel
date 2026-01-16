@@ -5,7 +5,7 @@ This is a monorepo boilerplate for building full-stack applications with a Next.
 # Technology stack
 
 - **Web framework**: Next.js 16.1
-- **Mobile framework**: Expo (managed workflow)
+- **Mobile framework**: Expo (development build, ejected from Expo Go)
 - **Monorepo**: Turborepo + pnpm
 - **Database**: Supabase
 - **Auth**: Supabase Auth
@@ -115,11 +115,29 @@ Common packages that should use `npx expo install`:
 - `expo-*` packages
 - Any package with native dependencies
 
-After installing new native packages, restart the development server with cache cleared:
+## Development Build (Ejected from Expo Go)
+
+The mobile app uses a **development build** instead of Expo Go. This allows using native modules like `burnt` and `react-native-mmkv` that aren't available in Expo Go.
+
+**After installing a new native package**, you must rebuild:
 
 ```bash
-npx expo start --clear
+cd apps/mobile
+npx expo prebuild --clean
+npx expo run:ios   # or run:android
 ```
+
+**Daily development** (no native changes):
+
+```bash
+cd apps/mobile
+npx expo start
+# Press 'i' for iOS or 'a' for Android
+```
+
+Hot reload works as normal - you only need to rebuild when adding/updating packages with native code.
+
+**The `ios/` and `android/` folders are gitignored** - they're regenerated from `app.config.ts` via `npx expo prebuild`.
 
 ## Drawer Navigation Setup
 

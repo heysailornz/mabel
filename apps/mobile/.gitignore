@@ -25,3 +25,8 @@ yarn-error.*
 
 # Logs
 *.log
+
+
+# Builds
+ios/
+android/

@@ -40,7 +40,7 @@ export function AuthCard() {
 
   return (
     <Card className="w-full max-w-md min-w-sm shadow-md">
-      <CardContent className="flex flex-col gap-4 px-4">
+      <CardContent className="flex flex-col gap-4 px-4 py-3">
         {auth.step === "otp" ? (
           <form
             onSubmit={(e) => {

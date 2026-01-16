@@ -4,3 +4,4 @@ export * from "./theme";
 export * from "./skills";
 export * from "./artifacts";
 export * from "./inputs";
+export * from "./recordings";

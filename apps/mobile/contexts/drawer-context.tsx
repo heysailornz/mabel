@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useMemo } from "react";
+import * as Haptics from "expo-haptics";
 import { useDrawerNotifications } from "@/hooks/use-drawer-notifications";
 
 interface DrawerContextType {
@@ -16,9 +17,20 @@ export function DrawerProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const { notifiedConversationIds, clearNotification } = useDrawerNotifications();
 
-  const open = useCallback(() => setIsOpen(true), []);
-  const close = useCallback(() => setIsOpen(false), []);
-  const toggle = useCallback(() => setIsOpen((prev) => !prev), []);
+  const open = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setIsOpen(true);
+  }, []);
+
+  const close = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setIsOpen(false);
+  }, []);
+
+  const toggle = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setIsOpen((prev) => !prev);
+  }, []);
 
   const value = useMemo(
     () => ({

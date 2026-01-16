@@ -1,19 +1,24 @@
-import { useEffect, useRef, useState } from "react";
-import { View, Pressable, Keyboard, TextInput } from "react-native";
+/**
+ * Conversation Input Component
+ *
+ * Main input component that manages text input and audio recording.
+ * Uses sub-components for different states (text, recording, recorded).
+ */
+
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import { View, Keyboard, TextInput } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { BottomSheetTextInput } from "@gorhom/bottom-sheet";
-import { Mic, Trash2, Send, Play } from "lucide-react-native";
-import { Text } from "@/components/ui/text";
-import { Card } from "@/components/ui/card";
-import { COLORS } from "@project/core/theme";
+import { useRecording } from "@/hooks/use-recording";
+import { toast } from "@/lib/toast";
 import type { InputMode } from "./conversation-input-sheet";
-
-// Static placeholder waveform heights
-const WAVEFORM_HEIGHTS = [
-  6, 10, 8, 14, 12, 10, 16, 8, 12, 14, 10, 6, 12, 8, 14, 10, 12, 8, 6, 10,
-];
-
-type InputState = "resting" | "typing" | "recording" | "recorded";
+import {
+  TextInputArea,
+  RecordingArea,
+  RecordedArea,
+  TextActions,
+  RecordingActions,
+  type InputState,
+} from "./input";
 
 interface ConversationInputProps {
   initialMode: InputMode;
@@ -32,28 +37,55 @@ export function ConversationInput({
 }: ConversationInputProps) {
   const insets = useSafeAreaInsets();
   const [text, setText] = useState("");
-  const [state, setState] = useState<InputState>(
-    initialMode === "recording" ? "recording" : "resting"
-  );
-  const [recordingDuration, setRecordingDuration] = useState(0);
+  const [state, setState] = useState<InputState>("resting");
   const [keyboardVisible, setKeyboardVisible] = useState(false);
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<TextInput | null>(null);
+  const recordedUriRef = useRef<string | null>(null);
+  const recordedDurationRef = useRef<number>(0);
+  const hasStartedRecording = useRef(false);
 
-  // Track keyboard visibility (use "Will" events for immediate response on iOS)
+  // Recording hook
+  const {
+    status: recordingStatus,
+    duration: recordingDuration,
+    metering,
+    error: recordingError,
+    startRecording,
+    stopRecording,
+    pauseRecording,
+    resumeRecording,
+    cancelRecording,
+    playRecording,
+    stopPlayback,
+    isPlaying,
+  } = useRecording();
+
+  // Determine effective state based on text content
+  const effectiveState: InputState =
+    text.length > 0 && state === "resting" ? "typing" : state;
+
+  // Calculate bottom padding based on keyboard state
+  const bottomPadding = keyboardVisible ? 16 : Math.max(insets.bottom, 24);
+
+  // ==========================================================================
+  // Keyboard tracking
+  // ==========================================================================
+
   useEffect(() => {
-    const showSub = Keyboard.addListener("keyboardWillShow", () => {
-      setKeyboardVisible(true);
-    });
-    const hideSub = Keyboard.addListener("keyboardWillHide", () => {
-      setKeyboardVisible(false);
-    });
-    // Android fallback (doesn't support "Will" events)
-    const showSubAndroid = Keyboard.addListener("keyboardDidShow", () => {
-      setKeyboardVisible(true);
-    });
-    const hideSubAndroid = Keyboard.addListener("keyboardDidHide", () => {
-      setKeyboardVisible(false);
-    });
+    const showSub = Keyboard.addListener("keyboardWillShow", () =>
+      setKeyboardVisible(true)
+    );
+    const hideSub = Keyboard.addListener("keyboardWillHide", () =>
+      setKeyboardVisible(false)
+    );
+    // Android fallback
+    const showSubAndroid = Keyboard.addListener("keyboardDidShow", () =>
+      setKeyboardVisible(true)
+    );
+    const hideSubAndroid = Keyboard.addListener("keyboardDidHide", () =>
+      setKeyboardVisible(false)
+    );
+
     return () => {
       showSub.remove();
       hideSub.remove();
@@ -62,219 +94,193 @@ export function ConversationInput({
     };
   }, []);
 
-  // Determine effective state based on text content
-  const effectiveState =
-    text.length > 0 && state === "resting" ? "typing" : state;
+  // ==========================================================================
+  // Recording handlers
+  // ==========================================================================
+
+  const handleStartRecording = useCallback(async () => {
+    recordedUriRef.current = null;
+    recordedDurationRef.current = 0;
+    await startRecording();
+    setState("recording");
+  }, [startRecording]);
+
+  const handleStopRecording = useCallback(async () => {
+    const result = await stopRecording();
+    if (result) {
+      recordedUriRef.current = result.uri;
+      recordedDurationRef.current = result.duration;
+      setState("recorded");
+    }
+  }, [stopRecording]);
+
+  const handlePauseRecording = useCallback(async () => {
+    await pauseRecording();
+  }, [pauseRecording]);
+
+  const handleResumeRecording = useCallback(async () => {
+    await resumeRecording();
+  }, [resumeRecording]);
+
+  // ==========================================================================
+  // Effects
+  // ==========================================================================
 
   // Auto-focus text input when sheet opens in text mode
   useEffect(() => {
     if (isOpen && initialMode === "text") {
-      // Small delay to ensure the sheet animation is complete
-      // const timer = setTimeout(() => {
       inputRef.current?.focus();
-      // }, 30);
-      // return () => clearTimeout(timer);
     }
   }, [isOpen, initialMode]);
 
-  // Recording timer simulation (actual recording will be implemented later)
+  // Start recording when sheet opens in recording mode
   useEffect(() => {
-    if (state === "recording") {
-      const interval = setInterval(() => {
-        setRecordingDuration((prev) => prev + 1);
-      }, 1000);
-      return () => clearInterval(interval);
+    if (
+      isOpen &&
+      initialMode === "recording" &&
+      state === "resting" &&
+      !hasStartedRecording.current
+    ) {
+      hasStartedRecording.current = true;
+      handleStartRecording();
     }
-  }, [state]);
+    if (!isOpen) {
+      hasStartedRecording.current = false;
+    }
+  }, [isOpen, initialMode, state, handleStartRecording]);
 
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
+  // Sync recording status with component state
+  useEffect(() => {
+    if (recordingStatus === "recording") {
+      setState("recording");
+    } else if (recordingStatus === "paused" || recordingStatus === "stopped") {
+      if (recordedUriRef.current) {
+        setState("recorded");
+      }
+    }
+  }, [recordingStatus]);
 
-  const handleTextChange = (value: string) => {
-    setText(value);
-  };
+  // Show recording errors
+  useEffect(() => {
+    if (recordingError) {
+      console.error("[ConversationInput] Recording error:", recordingError);
+      toast.error(recordingError);
+    }
+  }, [recordingError]);
 
-  const handleSend = () => {
+  // ==========================================================================
+  // Action handlers
+  // ==========================================================================
+
+  const handleSend = useCallback(() => {
     if (effectiveState === "typing" && text.trim()) {
       onSubmitText(text.trim());
       setText("");
       setState("resting");
-    } else if (state === "recorded") {
-      // TODO: Submit actual recording
-      onSubmitRecording("placeholder-uri", recordingDuration);
+    } else if (state === "recorded" && recordedUriRef.current) {
+      onSubmitRecording(recordedUriRef.current, recordedDurationRef.current);
+      recordedUriRef.current = null;
+      recordedDurationRef.current = 0;
+      setState("resting");
     }
-  };
+  }, [effectiveState, text, state, onSubmitText, onSubmitRecording]);
 
-  const handleMicPress = () => {
+  const handleMicPress = useCallback(async () => {
     if (state === "resting" || effectiveState === "typing") {
-      setState("recording");
-      setRecordingDuration(0);
       setText("");
+      await handleStartRecording();
     } else if (state === "recording") {
-      // Stop recording
-      setState("recorded");
+      if (recordingStatus === "recording") {
+        await handlePauseRecording();
+      } else if (recordingStatus === "paused") {
+        await handleResumeRecording();
+      }
     } else if (state === "recorded") {
-      // Start new recording
-      setState("recording");
-      setRecordingDuration(0);
+      await handleStartRecording();
     }
-  };
+  }, [
+    state,
+    effectiveState,
+    recordingStatus,
+    handleStartRecording,
+    handlePauseRecording,
+    handleResumeRecording,
+  ]);
 
-  const handleDelete = () => {
+  const handleFinalizeRecording = useCallback(async () => {
+    if (recordingStatus === "recording" || recordingStatus === "paused") {
+      await handleStopRecording();
+    }
+  }, [recordingStatus, handleStopRecording]);
+
+  const handleDelete = useCallback(async () => {
+    await cancelRecording();
+    recordedUriRef.current = null;
+    recordedDurationRef.current = 0;
     setState("resting");
-    setRecordingDuration(0);
-  };
+  }, [cancelRecording]);
 
-  const handlePlayback = () => {
-    // TODO: Implement playback
-    console.log("Play recording");
-  };
+  const handlePlayback = useCallback(async () => {
+    if (isPlaying) {
+      await stopPlayback();
+    } else if (recordedUriRef.current) {
+      await playRecording(recordedUriRef.current);
+    }
+  }, [isPlaying, playRecording, stopPlayback]);
 
-  // Render text input area (for resting/typing states)
-  const renderTextInput = () => (
-    <View className="px-4 py-4">
-      <BottomSheetTextInput
-        ref={inputRef}
-        value={text}
-        onChangeText={handleTextChange}
-        placeholder="Dictate or enter a consultation note ..."
-        placeholderTextColor={COLORS.mutedForeground}
-        multiline
-        className="text-base text-foreground min-h-[80px]"
-        style={{ textAlignVertical: "top" }}
-      />
-    </View>
-  );
+  // ==========================================================================
+  // Render
+  // ==========================================================================
 
-  // Render recording state (timer + waveform)
-  const renderRecording = () => (
-    <View className="px-4 py-4">
-      <View className="flex-row items-center gap-4">
-        {/* Timer */}
-        <Text className="text-lg font-medium text-foreground w-14">
-          {formatDuration(recordingDuration)}
-        </Text>
-
-        {/* Waveform */}
-        <View className="flex-1 flex-row items-center justify-center gap-0.5">
-          {WAVEFORM_HEIGHTS.map((height, i) => (
-            <View
-              key={i}
-              className="w-1 rounded-full bg-muted-foreground/40"
-              style={{ height }}
-            />
-          ))}
-        </View>
-      </View>
-    </View>
-  );
-
-  // Render recorded state (playback pill)
-  const renderRecorded = () => (
-    <View className="px-4 py-4">
-      <Card className="flex-row items-center gap-3 rounded-full px-4 py-3 border-border">
-        {/* Play button */}
-        <Pressable
-          onPress={handlePlayback}
-          className="h-10 w-10 items-center justify-center rounded-full bg-green-600"
-        >
-          <Play size={18} fill={COLORS.icon.white} color={COLORS.icon.white} />
-        </Pressable>
-
-        {/* Waveform */}
-        <View className="flex-1 flex-row items-center justify-center gap-0.5">
-          {WAVEFORM_HEIGHTS.map((height, i) => (
-            <View
-              key={i}
-              className="w-1 rounded-full bg-muted-foreground/40"
-              style={{ height }}
-            />
-          ))}
-        </View>
-
-        {/* Duration */}
-        <Text className="text-base text-muted-foreground">
-          {formatDuration(recordingDuration)}
-        </Text>
-      </Card>
-    </View>
-  );
-
-  // Render action buttons for resting/typing states (right-aligned)
-  const renderTextActions = () => {
-    const hasText = text.trim().length > 0;
-
-    return (
-      <View
-        className="flex-row items-center justify-end px-4 pt-2"
-        style={{ paddingBottom: keyboardVisible ? 16 : Math.max(insets.bottom, 24) }}
-      >
-        {hasText ? (
-          <Pressable
-            onPress={handleSend}
-            className="h-12 w-12 items-center justify-center rounded-full bg-accent active:opacity-90"
-          >
-            <Send size={22} color={COLORS.icon.white} />
-          </Pressable>
-        ) : (
-          <Pressable onPress={handleMicPress} className="p-2 active:opacity-80">
-            <Mic size={28} color={COLORS.icon.default} strokeWidth={1.5} />
-          </Pressable>
-        )}
-      </View>
-    );
-  };
-
-  // Render action buttons for recording/recorded states (spread layout)
-  const renderRecordingActions = () => {
-    const isRecording = state === "recording";
-
-    return (
-      <View
-        className="flex-row items-center justify-between px-4 pt-2"
-        style={{ paddingBottom: keyboardVisible ? 16 : Math.max(insets.bottom, 24) }}
-      >
-        {/* Delete button */}
-        <Pressable onPress={handleDelete} className="p-2 active:opacity-70">
-          <Trash2 size={28} color={COLORS.icon.default} />
-        </Pressable>
-
-        {/* Mic button */}
-        <Pressable onPress={handleMicPress} className="active:opacity-80">
-          <Mic
-            size={28}
-            color={isRecording ? COLORS.icon.destructive : COLORS.icon.default}
-            strokeWidth={1.5}
-          />
-        </Pressable>
-
-        {/* Send button */}
-        <Pressable
-          onPress={handleSend}
-          className="h-12 w-12 items-center justify-center rounded-full bg-accent active:opacity-90"
-        >
-          <Send size={22} color={COLORS.icon.white} />
-        </Pressable>
-      </View>
-    );
-  };
+  const isTextMode = effectiveState === "resting" || effectiveState === "typing";
+  const isRecordingMode = state === "recording";
+  const isRecordedMode = state === "recorded";
 
   return (
     <View>
-      {/* Main content area based on state */}
-      {(effectiveState === "resting" || effectiveState === "typing") &&
-        renderTextInput()}
-      {state === "recording" && renderRecording()}
-      {state === "recorded" && renderRecorded()}
+      {/* Content area */}
+      {isTextMode && (
+        <TextInputArea
+          ref={inputRef}
+          value={text}
+          onChangeText={setText}
+        />
+      )}
+      {isRecordingMode && (
+        <RecordingArea
+          duration={recordingDuration}
+          metering={metering}
+          isPaused={recordingStatus === "paused"}
+        />
+      )}
+      {isRecordedMode && (
+        <RecordedArea
+          duration={recordedDurationRef.current || recordingDuration}
+          isPlaying={isPlaying}
+          onPlayback={handlePlayback}
+        />
+      )}
 
-      {/* Action buttons - different layout based on state */}
-      {(effectiveState === "resting" || effectiveState === "typing") &&
-        renderTextActions()}
-      {(state === "recording" || state === "recorded") &&
-        renderRecordingActions()}
+      {/* Action buttons */}
+      {isTextMode && (
+        <TextActions
+          hasText={text.trim().length > 0}
+          paddingBottom={bottomPadding}
+          onSend={handleSend}
+          onMicPress={handleMicPress}
+        />
+      )}
+      {(isRecordingMode || isRecordedMode) && (
+        <RecordingActions
+          state={state}
+          recordingStatus={recordingStatus}
+          paddingBottom={bottomPadding}
+          onDelete={handleDelete}
+          onMicPress={handleMicPress}
+          onFinalizeRecording={handleFinalizeRecording}
+          onSend={handleSend}
+        />
+      )}
     </View>
   );
 }

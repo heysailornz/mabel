@@ -327,6 +327,7 @@ export type Database = {
           id: string
           practitioner_id: string
           status: string
+          storage_path: string | null
         }
         Insert: {
           audio_path: string
@@ -336,6 +337,7 @@ export type Database = {
           id?: string
           practitioner_id: string
           status?: string
+          storage_path?: string | null
         }
         Update: {
           audio_path?: string
@@ -345,6 +347,7 @@ export type Database = {
           id?: string
           practitioner_id?: string
           status?: string
+          storage_path?: string | null
         }
         Relationships: [
           {
