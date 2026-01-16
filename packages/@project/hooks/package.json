@@ -29,11 +29,11 @@
   "devDependencies": {
     "@project/tsconfig": "workspace:*",
     "@testing-library/react": "^16.0.0",
-    "@types/react": "^19.2.0",
-    "@types/react-dom": "^19.2.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "jsdom": "^26.0.0",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
     "tsup": "^8.0.0",
     "typescript": "^5",
     "vitest": "^3.1.4"

@@ -17,7 +17,7 @@ export default function AuthScreen() {
         {/* Branding area */}
         <View className="flex-1 items-center justify-center px-6">
           <Logo width={160} height={48} />
-          <Text className="mt-6 text-center text-3xl font-noto">
+          <Text className="mt-6 text-center text-xl font-noto">
             Let me log you in, so I can write your medical notes.
           </Text>
         </View>

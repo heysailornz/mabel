@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getConversation } from "@/server/actions/conversations";
 import { ConversationMessages } from "@/components/features/conversations/conversation-messages";
-import { RecordingBar } from "@/components/features/conversations/recording-bar";
+import { ConversationInput } from "@/components/features/conversations/conversation-input";
 
 interface ConversationPageProps {
   params: Promise<{ id: string }>;
@@ -41,8 +41,12 @@ export default async function ConversationPage({
         </div>
       </div>
 
-      {/* Recording bar - client component */}
-      <RecordingBar />
+      {/* Conversation input - slightly wider than content, fixed to bottom */}
+      <div className="border-t border-border bg-background px-4 py-3">
+        <div className="mx-auto max-w-4xl">
+          <ConversationInput />
+        </div>
+      </div>
     </div>
   );
 }

@@ -46,7 +46,26 @@ function resolveSubpath(srcPath, subpath) {
   return filePath;
 }
 
+// 5. Ensure React is always resolved from the mobile app's node_modules
+// This prevents "Cannot read property 'useState' of null" errors from multiple React copies
+const reactPath = path.resolve(projectRoot, "node_modules/react");
+const reactNativePath = path.resolve(projectRoot, "node_modules/react-native");
+
 config.resolver.resolveRequest = (context, moduleName, platform) => {
+  // Force React and React Native to always resolve from mobile app
+  if (moduleName === "react") {
+    return {
+      filePath: path.join(reactPath, "index.js"),
+      type: "sourceFile",
+    };
+  }
+  if (moduleName === "react-native") {
+    return {
+      filePath: path.join(reactNativePath, "index.js"),
+      type: "sourceFile",
+    };
+  }
+
   // Check if this is a workspace package import
   for (const [pkg, srcPath] of Object.entries(workspacePackages)) {
     if (moduleName === pkg) {

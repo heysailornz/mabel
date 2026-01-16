@@ -1,5 +1,5 @@
 import React from "react";
-import { Alert } from "react-native";
+import { Alert, Keyboard } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/auth-context";
 import { useAuthFlow } from "@project/hooks/auth";
@@ -22,7 +22,10 @@ export function AuthCard() {
       const result = await verifyOTP(email, token);
       return result;
     },
-    onSuccess: () => router.replace("/(app)"),
+    onSuccess: () => {
+      Keyboard.dismiss();
+      router.replace("/(app)");
+    },
     onError: (message) => Alert.alert("Error", message),
   });
 

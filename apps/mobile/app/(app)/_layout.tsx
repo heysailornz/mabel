@@ -3,6 +3,7 @@ import { Drawer } from "expo-router/drawer";
 import { useAuth } from "@/contexts/auth-context";
 import { ActivityIndicator, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { AppDrawerContent } from "@/components/navigation/app-drawer";
 import { useConversations } from "@/hooks/use-conversations";
 import { DrawerProvider } from "@/contexts/drawer-context";
@@ -37,32 +38,34 @@ export default function AppLayout() {
   return (
     <DrawerProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <Drawer
-          screenOptions={{
-            headerShown: false,
-            drawerType: "front",
-            drawerStyle: {
-              width: 280,
-            },
-            swipeEnabled: true,
-            swipeEdgeWidth: 50,
-          }}
-          drawerContent={CustomDrawerContent}
-        >
-          <Drawer.Screen
-            name="index"
-            options={{
-              drawerLabel: "Home",
+        <BottomSheetModalProvider>
+          <Drawer
+            screenOptions={{
+              headerShown: false,
+              drawerType: "front",
+              drawerStyle: {
+                width: 280,
+              },
+              swipeEnabled: true,
+              swipeEdgeWidth: 50,
             }}
-          />
-          <Drawer.Screen
-            name="c/[id]"
-            options={{
-              drawerLabel: "Conversation",
-              drawerItemStyle: { display: "none" },
-            }}
-          />
-        </Drawer>
+            drawerContent={CustomDrawerContent}
+          >
+            <Drawer.Screen
+              name="index"
+              options={{
+                drawerLabel: "Home",
+              }}
+            />
+            <Drawer.Screen
+              name="c/[id]"
+              options={{
+                drawerLabel: "Conversation",
+                drawerItemStyle: { display: "none" },
+              }}
+            />
+          </Drawer>
+        </BottomSheetModalProvider>
       </GestureHandlerRootView>
     </DrawerProvider>
   );
