@@ -56,14 +56,14 @@ This phase establishes the extensible skills/artifacts architecture to support f
 
 | Status | Task                                                                    | Specs                                                                                |
 | ------ | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| [ ]    | Backend: Storage bucket configuration with RLS                          | [recording-upload.md](./recording-upload.md), [security.md](./security.md)           |
+| [x]    | Backend: Storage bucket configuration with RLS                          | [recording-upload.md](./recording-upload.md), [security.md](./security.md)           |
 | [x]    | Mobile: https://github.com/gorhom/react-native-bottom-sheet integration |
-| [ ]    | Mobile: Recording controls integration                                  | [conversations.md](./conversations.md), [recording-upload.md](./recording-upload.md) |
-| [ ]    | Mobile: Audio recording interface with expo-av (AAC mono 128kbps)       | [recording-upload.md](./recording-upload.md)                                         |
-| [ ]    | Mobile: Local file storage with expo-file-system                        | [recording-upload.md](./recording-upload.md)                                         |
-| [ ]    | Mobile: Offline queue persistence with MMKV                             | [recording-upload.md](./recording-upload.md)                                         |
-| [ ]    | Mobile: TUS resumable uploads with tus-js-client                        | [recording-upload.md](./recording-upload.md)                                         |
-| [ ]    | Mobile: Upload progress UI and retry handling                           | [recording-upload.md](./recording-upload.md)                                         |
+| [x]    | Mobile: Recording controls integration                                  | [conversations.md](./conversations.md), [recording-upload.md](./recording-upload.md) |
+| [x]    | Mobile: Audio recording interface with expo-av (AAC mono 128kbps)       | [recording-upload.md](./recording-upload.md)                                         |
+| [x]    | Mobile: Local file storage with expo-file-system                        | [recording-upload.md](./recording-upload.md)                                         |
+| [x]    | Mobile: Offline queue persistence with MMKV                             | [recording-upload.md](./recording-upload.md)                                         |
+| [x]    | Mobile: TUS resumable uploads with tus-js-client                        | [recording-upload.md](./recording-upload.md)                                         |
+| [x]    | Mobile: Upload progress UI and retry handling                           | [recording-upload.md](./recording-upload.md)                                         |
 | [x]    | Web: Feature parity with mobile, using Card instead of bottom sheets    |
 | [ ]    | Web: Recording controls integration                                     |
 | [ ]    | Web: Resumable uploads                                                  |
