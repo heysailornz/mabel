@@ -54,43 +54,46 @@ This phase establishes the extensible skills/artifacts architecture to support f
 
 ## Phase 2: Recording & Upload
 
-| Status | Task                                                                     | Specs                                                                                |
-| ------ | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
-| [x]    | Mobile: https://github.com/gorhom/react-native-bottom-sheet integration  |
-| [ ]    | Mobile: Recording controls integration                                   | [conversations.md](./conversations.md), [recording-upload.md](./recording-upload.md) |
-| [ ]    | Mobile: Audio recording interface with expo-av (AAC mono 128kbps)        | [recording-upload.md](./recording-upload.md)                                         |
-| [ ]    | Mobile: Local file storage with expo-file-system                         | [recording-upload.md](./recording-upload.md)                                         |
-| [ ]    | Mobile: Offline queue persistence with MMKV                              | [recording-upload.md](./recording-upload.md)                                         |
-| [ ]    | Mobile: TUS resumable uploads with tus-js-client                         | [recording-upload.md](./recording-upload.md)                                         |
-| [ ]    | Mobile: Upload progress UI and retry handling                            | [recording-upload.md](./recording-upload.md)                                         |
-| [x]    | Web: Feature parity with mobile, using RNR Card instead of bottom sheets |
-| [ ]    | Edge function: Implement skill router                                    | [skills.md](./skills.md)                                                             |
-| [ ]    | Backend: Storage bucket configuration with RLS                           | [recording-upload.md](./recording-upload.md), [security.md](./security.md)           |
-| [ ]    | Backend: Storage trigger for processing pipeline                         | [recording-upload.md](./recording-upload.md), [transcription.md](./transcription.md) |
-| [ ]    | UI: Generalize message rendering for user_input type                     | [conversations.md](./conversations.md)                                               |
-| [ ]    | UI: Generalize artifact card for multiple artifact types                 | [artifacts.md](./artifacts.md), [conversations.md](./conversations.md)               |
+| Status | Task                                                                    | Specs                                                                                |
+| ------ | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| [ ]    | Backend: Storage bucket configuration with RLS                          | [recording-upload.md](./recording-upload.md), [security.md](./security.md)           |
+| [x]    | Mobile: https://github.com/gorhom/react-native-bottom-sheet integration |
+| [ ]    | Mobile: Recording controls integration                                  | [conversations.md](./conversations.md), [recording-upload.md](./recording-upload.md) |
+| [ ]    | Mobile: Audio recording interface with expo-av (AAC mono 128kbps)       | [recording-upload.md](./recording-upload.md)                                         |
+| [ ]    | Mobile: Local file storage with expo-file-system                        | [recording-upload.md](./recording-upload.md)                                         |
+| [ ]    | Mobile: Offline queue persistence with MMKV                             | [recording-upload.md](./recording-upload.md)                                         |
+| [ ]    | Mobile: TUS resumable uploads with tus-js-client                        | [recording-upload.md](./recording-upload.md)                                         |
+| [ ]    | Mobile: Upload progress UI and retry handling                           | [recording-upload.md](./recording-upload.md)                                         |
+| [x]    | Web: Feature parity with mobile, using Card instead of bottom sheets    |
+| [ ]    | Web: Recording controls integration                                     |
+| [ ]    | Web: Resumable uploads                                                  |
+| [ ]    | Web: Upload progress UI and retry handling                              |
+| [ ]    | UI: Generalize message rendering for user_input type                    | [conversations.md](./conversations.md)                                               |
+| [ ]    | UI: Generalize artifact card for multiple artifact types                | [artifacts.md](./artifacts.md), [conversations.md](./conversations.md)               |
 
 ## Phase 2.5: Text Entry Processing
 
-| Status | Task                                                                            | Specs                                                                    |
-| ------ | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| [ ]    | Edge function: Refactor classify-text-entry as unified classifier               | [skills.md](./skills.md), [text-entry.md](./text-entry.md)               |
-| [ ]    | Database: Add user_inputs table with RLS (or text_entries if before Phase 0.5)  | [database.md](./database.md), [text-entry.md](./text-entry.md)           |
-| [ ]    | Database: Update artifacts table for text source (or transcripts if before 0.5) | [database.md](./database.md)                                             |
-| [ ]    | Types: Add text entry types to @project/core                                    | [text-entry.md](./text-entry.md), [conversations.md](./conversations.md) |
-| [ ]    | Mobile: InputBar component (combined text + record)                             | [conversations.md](./conversations.md), [text-entry.md](./text-entry.md) |
-| [ ]    | Mobile: Text entry submission and message creation                              | [conversations.md](./conversations.md)                                   |
-| [ ]    | Mobile: Text entry status indicators (tick system)                              | [conversations.md](./conversations.md)                                   |
-| [ ]    | Web: InputBar component (combined text + record)                                | [conversations.md](./conversations.md)                                   |
-| [ ]    | Edge function: classify-text-entry (AI classifier)                              | [text-entry.md](./text-entry.md), [skills.md](./skills.md)               |
-| [ ]    | Edge function: process-text-entry (main orchestrator)                           | [text-entry.md](./text-entry.md)                                         |
-| [ ]    | Processing: Consultation content path (enhancement → summary → suggestions)     | [text-entry.md](./text-entry.md), [transcription.md](./transcription.md) |
-| [ ]    | Processing: Fragment path (merge into existing artifact)                        | [text-entry.md](./text-entry.md)                                         |
-| [ ]    | Processing: Instruction path (context loading → action execution)               | [text-entry.md](./text-entry.md)                                         |
-| [ ]    | Processing: Question path (context loading → answer generation)                 | [text-entry.md](./text-entry.md)                                         |
-| [ ]    | Message types: text_entry/user_input, text_processed/artifact_created           | [conversations.md](./conversations.md)                                   |
-| [ ]    | Message types: instruction_response, clarification_request                      | [conversations.md](./conversations.md)                                   |
-| [ ]    | Credits: Only consultation content uses credits (not instructions/questions)    | [text-entry.md](./text-entry.md), [payments.md](./payments.md)           |
+| Status | Task                                                                            | Specs                                                                                |
+| ------ | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| [ ]    | Backend: Storage trigger for processing pipeline                                | [recording-upload.md](./recording-upload.md), [transcription.md](./transcription.md) |
+| [ ]    | Edge function: Refactor classify-text-entry as unified classifier               | [skills.md](./skills.md), [text-entry.md](./text-entry.md)                           |
+| [ ]    | Edge function: Implement skill router                                           | [skills.md](./skills.md)                                                             |
+| [ ]    | Database: Add user_inputs table with RLS (or text_entries if before Phase 0.5)  | [database.md](./database.md), [text-entry.md](./text-entry.md)                       |
+| [ ]    | Database: Update artifacts table for text source (or transcripts if before 0.5) | [database.md](./database.md)                                                         |
+| [ ]    | Types: Add text entry types to @project/core                                    | [text-entry.md](./text-entry.md), [conversations.md](./conversations.md)             |
+| [ ]    | Mobile and web: InputBar component (combined text + record)                     | [conversations.md](./conversations.md), [text-entry.md](./text-entry.md)             |
+| [ ]    | Mobile and web: Text entry submission and message creation                      | [conversations.md](./conversations.md)                                               |
+| [ ]    | Mobile and web: Text entry status indicators (tick system)                      | [conversations.md](./conversations.md)                                               |
+| [ ]    | Web: InputBar component (combined text + record)                                | [conversations.md](./conversations.md)                                               |
+| [ ]    | Edge function: classify-text-entry (AI classifier)                              | [text-entry.md](./text-entry.md), [skills.md](./skills.md)                           |
+| [ ]    | Edge function: process-text-entry (main orchestrator)                           | [text-entry.md](./text-entry.md)                                                     |
+| [ ]    | Processing: Consultation content path (enhancement → summary → suggestions)     | [text-entry.md](./text-entry.md), [transcription.md](./transcription.md)             |
+| [ ]    | Processing: Fragment path (merge into existing artifact)                        | [text-entry.md](./text-entry.md)                                                     |
+| [ ]    | Processing: Instruction path (context loading → action execution)               | [text-entry.md](./text-entry.md)                                                     |
+| [ ]    | Processing: Question path (context loading → answer generation)                 | [text-entry.md](./text-entry.md)                                                     |
+| [ ]    | Message types: text_entry/user_input, text_processed/artifact_created           | [conversations.md](./conversations.md)                                               |
+| [ ]    | Message types: instruction_response, clarification_request                      | [conversations.md](./conversations.md)                                               |
+| [ ]    | Credits: Only consultation content uses credits (not instructions/questions)    | [text-entry.md](./text-entry.md), [payments.md](./payments.md)                       |
 
 ## Phase 3: Transcription Integration
 
