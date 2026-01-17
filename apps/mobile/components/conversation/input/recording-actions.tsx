@@ -1,14 +1,23 @@
 /**
  * Recording Actions Component
  *
- * Action buttons for recording/recorded modes (delete, mic/stop, send).
+ * Action buttons for recording/recorded modes (delete, mic/pause, send).
  */
 
-import React, { useCallback } from "react";
-import { View, Pressable } from "react-native";
+import React, { useCallback, useEffect } from "react";
+import { View, Pressable, StyleSheet } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+  Easing,
+  cancelAnimation,
+} from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
-import { Mic, Trash2, Send, Square } from "lucide-react-native";
+import { Mic, Trash2, Check } from "lucide-react-native";
 import { COLORS } from "@project/core/theme";
+import { SendButton } from "@/components/ui/send-button";
 import type { InputState } from "./types";
 import type { RecordingStatus } from "@project/core";
 
@@ -41,13 +50,6 @@ export function RecordingActions({
     onDelete();
   }, [onDelete]);
 
-  const handleSend = useCallback(() => {
-    if (canSend) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      onSend();
-    }
-  }, [canSend, onSend]);
-
   return (
     <View
       className="flex-row items-center justify-between px-4 pt-2"
@@ -67,17 +69,12 @@ export function RecordingActions({
         onFinalizeRecording={onFinalizeRecording}
       />
 
-      {/* Send button */}
-      <Pressable
-        onPress={handleSend}
+      {/* Send button (shows Check when paused to indicate "finish recording") */}
+      <SendButton
+        onPress={onSend}
         disabled={!canSend}
-        className={`h-12 w-12 items-center justify-center rounded-full bg-accent active:opacity-90 ${
-          !canSend ? "opacity-50" : ""
-        }`}
-        style={{ borderCurve: "continuous" }}
-      >
-        <Send size={22} color={COLORS.icon.white} />
-      </Pressable>
+        icon={isPaused ? Check : undefined}
+      />
     </View>
   );
 }
@@ -88,6 +85,54 @@ interface CenterButtonProps {
   isPaused: boolean;
   onMicPress: () => void;
   onFinalizeRecording: () => void;
+}
+
+/**
+ * Pulsing circle animation component for active recording state
+ */
+function PulsingCircle({ isActive }: { isActive: boolean }) {
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(0.4);
+
+  useEffect(() => {
+    if (isActive) {
+      // Start pulsing animation
+      scale.value = withRepeat(
+        withTiming(1.8, { duration: 1000, easing: Easing.out(Easing.ease) }),
+        -1, // infinite
+        false // don't reverse, restart from beginning
+      );
+      opacity.value = withRepeat(
+        withTiming(0, { duration: 1000, easing: Easing.out(Easing.ease) }),
+        -1,
+        false
+      );
+    } else {
+      cancelAnimation(scale);
+      cancelAnimation(opacity);
+      scale.value = 1;
+      opacity.value = 0.4;
+    }
+
+    return () => {
+      cancelAnimation(scale);
+      cancelAnimation(opacity);
+    };
+  }, [isActive, scale, opacity]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
+
+  if (!isActive) return null;
+
+  return (
+    <Animated.View
+      style={[styles.pulsingCircle, animatedStyle]}
+      pointerEvents="none"
+    />
+  );
 }
 
 function CenterButton({
@@ -116,21 +161,20 @@ function CenterButton({
     );
   }
 
-  if (isActivelyRecording) {
-    // When recording, show stop button to finalize
+  if (isActivelyRecording || isPaused) {
+    // When recording or paused, show mic button with pulsing circle (only when active)
+    // Tap to pause (if recording) or resume (if paused)
+    // Red when actively recording, black when paused
+    const micColor = isActivelyRecording ? COLORS.icon.destructive : COLORS.icon.default;
     return (
-      <Pressable onPress={handleFinalizeRecording} className="active:opacity-80">
-        <Square size={28} color={COLORS.icon.destructive} fill={COLORS.icon.destructive} />
-      </Pressable>
-    );
-  }
-
-  if (isPaused) {
-    // When paused, show mic button to resume
-    return (
-      <Pressable onPress={handleMicPress} className="active:opacity-80">
-        <Mic size={28} color={COLORS.icon.destructive} strokeWidth={1.5} />
-      </Pressable>
+      <View style={styles.centerButtonContainer}>
+        <PulsingCircle isActive={isActivelyRecording} />
+        <Pressable onPress={handleMicPress} className="active:opacity-80">
+          <View style={styles.micButtonInner}>
+            <Mic size={28} color={micColor} strokeWidth={1.5} />
+          </View>
+        </Pressable>
+      </View>
     );
   }
 
@@ -141,3 +185,23 @@ function CenterButton({
     </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  centerButtonContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    width: 56,
+    height: 56,
+  },
+  pulsingCircle: {
+    position: "absolute",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.destructive,
+  },
+  micButtonInner: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});

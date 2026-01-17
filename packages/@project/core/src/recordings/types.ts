@@ -52,6 +52,9 @@ export interface QueuedRecording {
   /** Recording duration in seconds */
   durationSeconds: number;
 
+  /** Spectrum data for waveform visualization (amplitude values per time slice) */
+  spectrumData?: number[][];
+
   /** ISO timestamp when recording was created */
   createdAt: string;
 
@@ -179,6 +182,8 @@ export interface RecordingUploadMetadata {
   input_type: "audio";
   recording_id: string;
   duration_seconds: number;
+  /** Spectrum data for waveform visualization (amplitude values per time slice) */
+  spectrum_data?: number[][];
   upload_progress?: number;
   storage_path?: string;
   status: RecordingUploadStatus;

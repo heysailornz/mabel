@@ -16,13 +16,12 @@ import {
   AudioManager,
   FileFormat,
 } from "react-native-audio-api";
-import type { AudioBufferSourceNode, AnalyserNode } from "react-native-audio-api";
+import type { AudioBufferSourceNode } from "react-native-audio-api";
 import type { RecordingStatus, RecordingResult } from "@project/core";
 import { MOBILE_AUDIO_FORMAT } from "@project/core";
 
-const FFT_SIZE = 64; // 32 frequency bins
-const SPECTRUM_UPDATE_INTERVAL = 50; // ms between spectrum updates
-const SPECTRUM_BINS = FFT_SIZE / 2; // Number of frequency bins
+const SPECTRUM_BINS = 32; // Number of amplitude bins for visualization
+const AUDIO_CALLBACK_BUFFER_SIZE = 1024;
 
 export interface SpectrumData {
   /** Current spectrum values (0-255 for each frequency bin) */
@@ -58,9 +57,7 @@ export function useSpectrumRecording(): UseSpectrumRecordingReturn {
   const [isPlaying, setIsPlaying] = useState(false);
 
   // Refs for audio nodes
-  const audioContextRef = useRef<AudioContext | null>(null);
   const recorderRef = useRef<AudioRecorder | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
   const spectrumHistoryRef = useRef<number[][]>([]);
 
   // Playback refs
@@ -68,8 +65,6 @@ export function useSpectrumRecording(): UseSpectrumRecordingReturn {
   const playbackSourceRef = useRef<AudioBufferSourceNode | null>(null);
 
   // Timer refs
-  const durationTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const spectrumTimerRef = useRef<NodeJS.Timeout | null>(null);
   const recordingStartTime = useRef<number>(0);
   const pausedDuration = useRef<number>(0);
 
@@ -105,55 +100,50 @@ export function useSpectrumRecording(): UseSpectrumRecordingReturn {
     }
   }, []);
 
-  // Start spectrum analysis loop
-  const startSpectrumAnalysis = useCallback(() => {
-    if (!analyserRef.current) return;
+  // Compute amplitude levels from raw audio data
+  const computeAmplitude = useCallback((audioData: Float32Array): number[] => {
+    const binSize = Math.floor(audioData.length / SPECTRUM_BINS);
+    const amplitudes: number[] = [];
 
-    const analyser = analyserRef.current;
-    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+    for (let i = 0; i < SPECTRUM_BINS; i++) {
+      let sum = 0;
+      const start = i * binSize;
+      const end = Math.min(start + binSize, audioData.length);
 
-    spectrumTimerRef.current = setInterval(() => {
-      if (analyserRef.current) {
-        analyserRef.current.getByteFrequencyData(dataArray);
-
-        // Store a copy of current spectrum
-        const snapshot = Array.from(dataArray);
-        spectrumHistoryRef.current.push(snapshot);
-
-        setSpectrum({
-          current: new Uint8Array(dataArray),
-          history: spectrumHistoryRef.current,
-        });
+      for (let j = start; j < end; j++) {
+        sum += Math.abs(audioData[j]);
       }
-    }, SPECTRUM_UPDATE_INTERVAL);
-  }, []);
 
-  // Stop spectrum analysis
-  const stopSpectrumAnalysis = useCallback(() => {
-    if (spectrumTimerRef.current) {
-      clearInterval(spectrumTimerRef.current);
-      spectrumTimerRef.current = null;
+      // Average amplitude for this bin
+      const avg = sum / (end - start);
+
+      // Apply aggressive scaling for visibility
+      // Typical speech is 0.01-0.1, so multiply by large factor
+      // Use sqrt to compress dynamic range (makes quiet sounds more visible)
+      const boosted = Math.sqrt(avg) * 8;
+      const scaled = Math.min(255, Math.floor(boosted * 255));
+      amplitudes.push(scaled);
     }
+
+    return amplitudes;
   }, []);
 
-  // Start duration timer
-  const startDurationTimer = useCallback(() => {
-    recordingStartTime.current = Date.now();
-    durationTimerRef.current = setInterval(() => {
-      const elapsed = Math.floor(
-        (Date.now() - recordingStartTime.current) / 1000
-      );
+  // Handle incoming audio data from recorder
+  const handleAudioData = useCallback((audioData: Float32Array) => {
+    const amplitudes = computeAmplitude(audioData);
+    spectrumHistoryRef.current.push(amplitudes);
+
+    // Update duration while recording (piggyback on audio callbacks)
+    if (recordingStartTime.current > 0) {
+      const elapsed = Math.floor((Date.now() - recordingStartTime.current) / 1000);
       setDuration(pausedDuration.current + elapsed);
-    }, 100);
-  }, []);
-
-  // Stop duration timer
-  const stopDurationTimer = useCallback(() => {
-    if (durationTimerRef.current) {
-      clearInterval(durationTimerRef.current);
-      durationTimerRef.current = null;
     }
-  }, []);
+
+    setSpectrum({
+      current: new Uint8Array(amplitudes),
+      history: spectrumHistoryRef.current,
+    });
+  }, [computeAmplitude]);
 
   // Start recording
   const startRecording = useCallback(async () => {
@@ -167,15 +157,15 @@ export function useSpectrumRecording(): UseSpectrumRecordingReturn {
         return;
       }
 
-      // Create audio context and nodes
-      const audioContext = new AudioContext({ sampleRate: MOBILE_AUDIO_FORMAT.sampleRate });
-      audioContextRef.current = audioContext;
+      // Configure iOS audio session for recording
+      AudioManager.setAudioSessionOptions({
+        iosCategory: "playAndRecord",
+        iosMode: "default",
+        iosOptions: ["defaultToSpeaker", "allowBluetooth"],
+      });
 
-      // Create analyser node
-      const analyser = audioContext.createAnalyser();
-      analyser.fftSize = FFT_SIZE;
-      analyser.smoothingTimeConstant = 0.3;
-      analyserRef.current = analyser;
+      // Activate audio session
+      await AudioManager.setAudioSessionActivity(true);
 
       // Create recorder
       const recorder = new AudioRecorder();
@@ -187,10 +177,19 @@ export function useSpectrumRecording(): UseSpectrumRecordingReturn {
         channelCount: MOBILE_AUDIO_FORMAT.numberOfChannels,
       });
 
-      // Create recorder adapter and connect to analyser
-      const recorderAdapter = audioContext.createRecorderAdapter();
-      recorder.connect(recorderAdapter);
-      recorderAdapter.connect(analyser);
+      // Set up audio callback for visualization
+      recorder.onAudioReady(
+        {
+          sampleRate: MOBILE_AUDIO_FORMAT.sampleRate,
+          bufferLength: AUDIO_CALLBACK_BUFFER_SIZE,
+          channelCount: MOBILE_AUDIO_FORMAT.numberOfChannels,
+        },
+        (event) => {
+          // Get audio data from the first channel
+          const audioData = event.buffer.getChannelData(0);
+          handleAudioData(audioData);
+        }
+      );
 
       // Start recording
       const result = recorder.start();
@@ -198,22 +197,19 @@ export function useSpectrumRecording(): UseSpectrumRecordingReturn {
         throw new Error(result.message || "Failed to start recording");
       }
 
-      // Reset state
+      // Reset state and start timing
       pausedDuration.current = 0;
+      recordingStartTime.current = Date.now();
       spectrumHistoryRef.current = [];
       setDuration(0);
       setSpectrum({ current: null, history: [] });
       setStatus("recording");
-
-      // Start timers
-      startDurationTimer();
-      startSpectrumAnalysis();
     } catch (err) {
       console.error("[useSpectrumRecording] Start error:", err);
       setError(err instanceof Error ? err.message : "Failed to start recording");
       setStatus("idle");
     }
-  }, [requestPermissions, startDurationTimer, startSpectrumAnalysis]);
+  }, [requestPermissions, handleAudioData]);
 
   // Pause recording
   const pauseRecording = useCallback(async () => {
@@ -222,16 +218,15 @@ export function useSpectrumRecording(): UseSpectrumRecordingReturn {
 
       recorderRef.current.pause();
 
-      // Store accumulated duration
+      // Store accumulated duration for resume
       pausedDuration.current = duration;
-      stopDurationTimer();
-      stopSpectrumAnalysis();
+      recordingStartTime.current = 0; // Stop timing
       setStatus("paused");
     } catch (err) {
       console.error("[useSpectrumRecording] Pause error:", err);
       setError(err instanceof Error ? err.message : "Failed to pause recording");
     }
-  }, [status, duration, stopDurationTimer, stopSpectrumAnalysis]);
+  }, [status, duration]);
 
   // Resume recording
   const resumeRecording = useCallback(async () => {
@@ -240,14 +235,14 @@ export function useSpectrumRecording(): UseSpectrumRecordingReturn {
 
       recorderRef.current.resume();
 
+      // Reset start time for the new segment
+      recordingStartTime.current = Date.now();
       setStatus("recording");
-      startDurationTimer();
-      startSpectrumAnalysis();
     } catch (err) {
       console.error("[useSpectrumRecording] Resume error:", err);
       setError(err instanceof Error ? err.message : "Failed to resume recording");
     }
-  }, [status, startDurationTimer, startSpectrumAnalysis]);
+  }, [status]);
 
   // Stop recording and get result
   const stopRecording = useCallback(async (): Promise<RecordingResult | null> => {
@@ -256,8 +251,8 @@ export function useSpectrumRecording(): UseSpectrumRecordingReturn {
         return null;
       }
 
-      stopDurationTimer();
-      stopSpectrumAnalysis();
+      // Clear the audio callback
+      recorderRef.current.clearOnAudioReady();
 
       const result = recorderRef.current.stop();
       if (result.status === "error") {
@@ -269,11 +264,8 @@ export function useSpectrumRecording(): UseSpectrumRecordingReturn {
       // Result is success, extract file info
       const fileInfo = result;
 
-      // Close audio context
-      if (audioContextRef.current) {
-        await audioContextRef.current.close();
-        audioContextRef.current = null;
-      }
+      // Deactivate audio session
+      await AudioManager.setAudioSessionActivity(false);
 
       setStatus("stopped");
 
@@ -289,31 +281,30 @@ export function useSpectrumRecording(): UseSpectrumRecordingReturn {
       setStatus("idle");
       return null;
     }
-  }, [status, duration, stopDurationTimer, stopSpectrumAnalysis]);
+  }, [status, duration]);
 
   // Cancel recording (discard)
   const cancelRecording = useCallback(async () => {
     try {
-      stopDurationTimer();
-      stopSpectrumAnalysis();
 
       if (recorderRef.current) {
-        if (recorderRef.current.isRecording() || recorderRef.current.isPaused()) {
+        recorderRef.current.clearOnAudioReady();
+        try {
+          // Try to stop if recording is active
           recorderRef.current.stop();
+        } catch {
+          // Ignore if already stopped
         }
         recorderRef.current = null;
       }
 
-      if (audioContextRef.current) {
-        await audioContextRef.current.close();
-        audioContextRef.current = null;
-      }
-
-      analyserRef.current = null;
+      // Deactivate audio session
+      await AudioManager.setAudioSessionActivity(false);
 
       // Reset state
       spectrumHistoryRef.current = [];
       pausedDuration.current = 0;
+      recordingStartTime.current = 0;
       setDuration(0);
       setSpectrum({ current: null, history: [] });
       setError(null);
@@ -322,7 +313,7 @@ export function useSpectrumRecording(): UseSpectrumRecordingReturn {
       console.error("[useSpectrumRecording] Cancel error:", err);
       setError(err instanceof Error ? err.message : "Failed to cancel recording");
     }
-  }, [stopDurationTimer, stopSpectrumAnalysis]);
+  }, []);
 
   // Play recording
   const playRecording = useCallback(async (uri: string) => {
@@ -383,23 +374,13 @@ export function useSpectrumRecording(): UseSpectrumRecordingReturn {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      stopDurationTimer();
-      stopSpectrumAnalysis();
-
       if (recorderRef.current) {
         try {
-          if (recorderRef.current.isRecording() || recorderRef.current.isPaused()) {
-            recorderRef.current.stop();
-          }
+          recorderRef.current.clearOnAudioReady();
+          recorderRef.current.stop();
         } catch {
           // Ignore cleanup errors
         }
-      }
-
-      if (audioContextRef.current) {
-        audioContextRef.current.close().catch(() => {
-          // Ignore cleanup errors
-        });
       }
 
       if (playbackContextRef.current) {
@@ -407,8 +388,13 @@ export function useSpectrumRecording(): UseSpectrumRecordingReturn {
           // Ignore cleanup errors
         });
       }
+
+      // Deactivate audio session
+      AudioManager.setAudioSessionActivity(false).catch(() => {
+        // Ignore cleanup errors
+      });
     };
-  }, [stopDurationTimer, stopSpectrumAnalysis]);
+  }, []);
 
   return {
     status,

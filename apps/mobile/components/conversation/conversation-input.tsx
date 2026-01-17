@@ -24,7 +24,7 @@ interface ConversationInputProps {
   initialMode: InputMode;
   isOpen: boolean;
   onSubmitText: (text: string) => void;
-  onSubmitRecording: (uri: string, duration: number) => void;
+  onSubmitRecording: (uri: string, duration: number, spectrumData?: number[][]) => void;
   onCancel: () => void;
 }
 
@@ -151,6 +151,17 @@ export function ConversationInput({
     }
   }, [isOpen, initialMode, state, handleStartRecording]);
 
+  // Cancel recording when sheet is dismissed (cleanup unsaved audio)
+  useEffect(() => {
+    if (!isOpen && (state === "recording" || state === "recorded")) {
+      cancelRecording();
+      recordedUriRef.current = null;
+      recordedDurationRef.current = 0;
+      recordedSpectrumHistoryRef.current = undefined;
+      setState("resting");
+    }
+  }, [isOpen, state, cancelRecording]);
+
   // Sync recording status with component state
   useEffect(() => {
     if (recordingStatus === "recording") {
@@ -174,18 +185,31 @@ export function ConversationInput({
   // Action handlers
   // ==========================================================================
 
-  const handleSend = useCallback(() => {
+  const handleSend = useCallback(async () => {
     if (effectiveState === "typing" && text.trim()) {
       onSubmitText(text.trim());
       setText("");
       setState("resting");
     } else if (state === "recorded" && recordedUriRef.current) {
-      onSubmitRecording(recordedUriRef.current, recordedDurationRef.current);
+      // Already stopped - submit the recorded file with spectrum data
+      onSubmitRecording(
+        recordedUriRef.current,
+        recordedDurationRef.current,
+        recordedSpectrumHistoryRef.current
+      );
       recordedUriRef.current = null;
       recordedDurationRef.current = 0;
+      recordedSpectrumHistoryRef.current = undefined;
       setState("resting");
+    } else if (state === "recording" && recordingStatus === "paused") {
+      // Recording is paused - stop and submit immediately
+      const result = await stopRecording();
+      if (result) {
+        onSubmitRecording(result.uri, result.duration, result.spectrumHistory);
+        setState("resting");
+      }
     }
-  }, [effectiveState, text, state, onSubmitText, onSubmitRecording]);
+  }, [effectiveState, text, state, recordingStatus, onSubmitText, onSubmitRecording, stopRecording]);
 
   const handleMicPress = useCallback(async () => {
     if (state === "resting" || effectiveState === "typing") {

@@ -17,6 +17,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: "com.myapp.app",
+    infoPlist: {
+      NSMicrophoneUsageDescription: "This app uses the microphone to record audio messages.",
+    },
   },
   android: {
     adaptiveIcon: {
@@ -24,6 +27,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       backgroundColor: "#ffffff",
     },
     package: "com.myapp.app",
+    permissions: ["android.permission.RECORD_AUDIO"],
   },
   extra: {
     supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,

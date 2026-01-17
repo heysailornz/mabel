@@ -82,7 +82,7 @@ export default function ConversationScreen() {
   );
 
   const handleSubmitRecording = useCallback(
-    async (uri: string, duration: number) => {
+    async (uri: string, duration: number, spectrumData?: number[][]) => {
       if (!id || isSubmitting) return;
       setIsSubmitting(true);
 
@@ -96,12 +96,13 @@ export default function ConversationScreen() {
           return;
         }
 
-        // Add to upload queue with existing conversation ID
+        // Add to upload queue with existing conversation ID and spectrum data
         await addToQueue({
           fileUri: uri,
           practitionerId: user.id,
           conversationId: id,
           durationSeconds: duration,
+          spectrumData,
         });
 
         // Refresh messages (will show the pending upload)

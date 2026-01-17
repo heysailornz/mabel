@@ -18,6 +18,7 @@ interface UseUploadQueueReturn {
     practitionerId: string;
     conversationId: string | null;
     durationSeconds: number;
+    spectrumData?: number[][];
   }) => Promise<string>;
 
   /** Retry a failed upload */
@@ -58,6 +59,7 @@ export function useUploadQueue(): UseUploadQueueReturn {
       practitionerId: string;
       conversationId: string | null;
       durationSeconds: number;
+      spectrumData?: number[][];
     }) => {
       return uploadQueue.addToQueue(recording);
     },

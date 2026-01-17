@@ -18,7 +18,11 @@ interface RecordingAreaProps {
   isPaused: boolean;
 }
 
-export function RecordingArea({ duration, spectrum, isPaused }: RecordingAreaProps) {
+export function RecordingArea({
+  duration,
+  spectrum,
+  isPaused,
+}: RecordingAreaProps) {
   return (
     <Animated.View
       entering={FadeIn.duration(150)}
@@ -35,7 +39,7 @@ export function RecordingArea({ duration, spectrum, isPaused }: RecordingAreaPro
         </Text>
 
         {/* Animated Waveform */}
-        <View className="flex-1">
+        <View className="flex-1 justify-center mt-0.5">
           <WaveformVisualizer
             spectrum={spectrum}
             isActive={!isPaused}
@@ -43,13 +47,6 @@ export function RecordingArea({ duration, spectrum, isPaused }: RecordingAreaPro
             barColor={isPaused ? COLORS.mutedForeground : undefined}
           />
         </View>
-
-        {/* Pause indicator */}
-        {isPaused && (
-          <Animated.View entering={FadeIn.duration(150)} exiting={FadeOut.duration(100)}>
-            <Text className="text-sm text-muted-foreground">Paused</Text>
-          </Animated.View>
-        )}
       </View>
     </Animated.View>
   );

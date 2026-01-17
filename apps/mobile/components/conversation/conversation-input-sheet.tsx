@@ -15,7 +15,7 @@ export type InputMode = "text" | "recording";
 interface ConversationInputSheetProps {
   initialMode: InputMode;
   onSubmitText: (text: string) => void;
-  onSubmitRecording: (uri: string, duration: number) => void;
+  onSubmitRecording: (uri: string, duration: number, spectrumData?: number[][]) => void;
   onDismiss: () => void;
 }
 

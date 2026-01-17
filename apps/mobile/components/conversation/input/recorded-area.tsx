@@ -57,7 +57,7 @@ export function RecordedArea({
         </Pressable>
 
         {/* Static Waveform */}
-        <View className="flex-1">
+        <View className="flex-1 justify-center mt-0.5">
           <WaveformVisualizer
             spectrumHistory={spectrumHistory}
             isActive={false}

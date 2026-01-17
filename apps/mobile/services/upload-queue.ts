@@ -91,6 +91,7 @@ class UploadQueueManager {
     practitionerId: string;
     conversationId: string | null;
     durationSeconds: number;
+    spectrumData?: number[][];
   }): Promise<string> {
     const id = `rec_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
     const fileName = generateRecordingFileName(recording.practitionerId);
@@ -103,6 +104,7 @@ class UploadQueueManager {
       conversationId: recording.conversationId,
       messageId: null,
       durationSeconds: recording.durationSeconds,
+      spectrumData: recording.spectrumData,
       createdAt: new Date().toISOString(),
       uploadAttempts: 0,
       status: "queued",
@@ -234,6 +236,7 @@ class UploadQueueManager {
             input_type: "audio",
             recording_id: item.id,
             duration_seconds: item.durationSeconds,
+            spectrum_data: item.spectrumData,
             upload_progress: 0,
             status: "uploading",
           },

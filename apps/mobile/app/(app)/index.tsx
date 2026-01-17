@@ -93,7 +93,7 @@ export default function NewConversationScreen() {
     }
   }, [isSubmitting, router]);
 
-  const handleSubmitRecording = useCallback(async (uri: string, duration: number) => {
+  const handleSubmitRecording = useCallback(async (uri: string, duration: number, spectrumData?: number[][]) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
@@ -116,12 +116,13 @@ export default function NewConversationScreen() {
         return;
       }
 
-      // Add recording to upload queue with conversation ID
+      // Add recording to upload queue with conversation ID and spectrum data
       await addToQueue({
         fileUri: uri,
         practitionerId: user.id,
         conversationId: result.id,
         durationSeconds: duration,
+        spectrumData,
       });
 
       bottomSheetRef.current?.dismiss();

@@ -6,7 +6,7 @@
  * - Static mode: Shows full recording scaled to available width
  */
 
-import { useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { View, LayoutChangeEvent } from "react-native";
 import Animated, {
   useSharedValue,
@@ -108,10 +108,12 @@ function LiveWaveform({
   spectrum,
   barColor,
   containerWidth,
+  isActive,
 }: {
   spectrum: Uint8Array | null;
   barColor: string;
   containerWidth: number;
+  isActive: boolean;
 }) {
   // Calculate how many bars fit in the container
   const maxBars = Math.floor(containerWidth / BAR_TOTAL_WIDTH);
@@ -119,9 +121,9 @@ function LiveWaveform({
   // Store history of amplitude values
   const historyRef = useMemo(() => ({ values: [] as number[] }), []);
 
-  // Add new amplitude when spectrum changes
+  // Add new amplitude when spectrum changes (only when active)
   useEffect(() => {
-    if (spectrum) {
+    if (isActive && spectrum) {
       const amplitude = spectrumToAmplitude(spectrum);
       historyRef.values.push(amplitude);
 
@@ -130,7 +132,7 @@ function LiveWaveform({
         historyRef.values.shift();
       }
     }
-  }, [spectrum, maxBars, historyRef]);
+  }, [spectrum, maxBars, historyRef, isActive]);
 
   // Get display values - pad with empty bars on the left if needed
   const displayValues = useMemo(() => {
@@ -273,36 +275,34 @@ export function WaveformVisualizer({
   barColor = COLORS.mutedForeground,
   mode = "live",
 }: WaveformVisualizerProps) {
-  const containerWidth = useSharedValue(0);
+  const [containerWidth, setContainerWidth] = useState(0);
 
-  const onLayout = useCallback(
-    (event: LayoutChangeEvent) => {
-      containerWidth.value = event.nativeEvent.layout.width;
-    },
-    [containerWidth]
-  );
+  const onLayout = useCallback((event: LayoutChangeEvent) => {
+    setContainerWidth(event.nativeEvent.layout.width);
+  }, []);
 
   return (
     <View
       style={{ flex: 1, height: MAX_HEIGHT }}
       onLayout={onLayout}
     >
-      {containerWidth.value > 0 && (
+      {containerWidth > 0 && (
         <>
           {mode === "static" && spectrumHistory && spectrumHistory.length > 0 ? (
             <StaticWaveform
               spectrumHistory={spectrumHistory}
               barColor={barColor}
-              containerWidth={containerWidth.value}
+              containerWidth={containerWidth}
             />
-          ) : isActive && spectrum ? (
+          ) : mode === "live" ? (
             <LiveWaveform
-              spectrum={spectrum}
+              spectrum={spectrum ?? null}
               barColor={barColor}
-              containerWidth={containerWidth.value}
+              containerWidth={containerWidth}
+              isActive={isActive}
             />
           ) : (
-            <IdleWaveform barColor={barColor} containerWidth={containerWidth.value} />
+            <IdleWaveform barColor={barColor} containerWidth={containerWidth} />
           )}
         </>
       )}
