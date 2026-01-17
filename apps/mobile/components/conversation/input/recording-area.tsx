@@ -14,11 +14,11 @@ import { formatDuration } from "./utils";
 
 interface RecordingAreaProps {
   duration: number;
-  metering: number | null;
+  spectrum: Uint8Array | null;
   isPaused: boolean;
 }
 
-export function RecordingArea({ duration, metering, isPaused }: RecordingAreaProps) {
+export function RecordingArea({ duration, spectrum, isPaused }: RecordingAreaProps) {
   return (
     <Animated.View
       entering={FadeIn.duration(150)}
@@ -37,8 +37,9 @@ export function RecordingArea({ duration, metering, isPaused }: RecordingAreaPro
         {/* Animated Waveform */}
         <View className="flex-1">
           <WaveformVisualizer
-            metering={metering}
+            spectrum={spectrum}
             isActive={!isPaused}
+            mode="live"
             barColor={isPaused ? COLORS.mutedForeground : undefined}
           />
         </View>

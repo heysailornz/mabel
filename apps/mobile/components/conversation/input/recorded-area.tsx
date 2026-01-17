@@ -17,11 +17,17 @@ import { formatDuration } from "./utils";
 
 interface RecordedAreaProps {
   duration: number;
+  spectrumHistory?: number[][];
   isPlaying: boolean;
   onPlayback: () => void;
 }
 
-export function RecordedArea({ duration, isPlaying, onPlayback }: RecordedAreaProps) {
+export function RecordedArea({
+  duration,
+  spectrumHistory,
+  isPlaying,
+  onPlayback,
+}: RecordedAreaProps) {
   const handlePlayback = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onPlayback();
@@ -52,7 +58,11 @@ export function RecordedArea({ duration, isPlaying, onPlayback }: RecordedAreaPr
 
         {/* Static Waveform */}
         <View className="flex-1">
-          <WaveformVisualizer metering={null} isActive={false} />
+          <WaveformVisualizer
+            spectrumHistory={spectrumHistory}
+            isActive={false}
+            mode="static"
+          />
         </View>
 
         {/* Duration */}

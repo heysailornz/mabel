@@ -8,7 +8,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { View, Keyboard, TextInput } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRecording } from "@/hooks/use-recording";
+import { useSpectrumRecording } from "@/hooks/use-spectrum-recording";
 import { toast } from "@/lib/toast";
 import type { InputMode } from "./conversation-input-sheet";
 import {
@@ -42,13 +42,14 @@ export function ConversationInput({
   const inputRef = useRef<TextInput | null>(null);
   const recordedUriRef = useRef<string | null>(null);
   const recordedDurationRef = useRef<number>(0);
+  const recordedSpectrumHistoryRef = useRef<number[][] | undefined>(undefined);
   const hasStartedRecording = useRef(false);
 
-  // Recording hook
+  // Recording hook with spectrum analysis
   const {
     status: recordingStatus,
     duration: recordingDuration,
-    metering,
+    spectrum,
     error: recordingError,
     startRecording,
     stopRecording,
@@ -58,7 +59,7 @@ export function ConversationInput({
     playRecording,
     stopPlayback,
     isPlaying,
-  } = useRecording();
+  } = useSpectrumRecording();
 
   // Determine effective state based on text content
   const effectiveState: InputState =
@@ -110,6 +111,7 @@ export function ConversationInput({
     if (result) {
       recordedUriRef.current = result.uri;
       recordedDurationRef.current = result.duration;
+      recordedSpectrumHistoryRef.current = result.spectrumHistory;
       setState("recorded");
     }
   }, [stopRecording]);
@@ -217,6 +219,7 @@ export function ConversationInput({
     await cancelRecording();
     recordedUriRef.current = null;
     recordedDurationRef.current = 0;
+    recordedSpectrumHistoryRef.current = undefined;
     setState("resting");
   }, [cancelRecording]);
 
@@ -249,13 +252,14 @@ export function ConversationInput({
       {isRecordingMode && (
         <RecordingArea
           duration={recordingDuration}
-          metering={metering}
+          spectrum={spectrum.current}
           isPaused={recordingStatus === "paused"}
         />
       )}
       {isRecordedMode && (
         <RecordedArea
           duration={recordedDurationRef.current || recordingDuration}
+          spectrumHistory={recordedSpectrumHistoryRef.current}
           isPlaying={isPlaying}
           onPlayback={handlePlayback}
         />

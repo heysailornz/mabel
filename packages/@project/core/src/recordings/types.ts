@@ -90,6 +90,9 @@ export interface RecordingResult {
 
   /** File size in bytes */
   fileSize: number;
+
+  /** Spectrum history for waveform visualization (optional) */
+  spectrumHistory?: number[][];
 }
 
 // =============================================================================
